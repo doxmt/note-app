@@ -8,7 +8,10 @@ import { useRouter } from 'expo-router';
 
 
 export default function MainScreen() {
-  
+  const router = useRouter();
+  const handleSignUp = () => {
+    router.push('/signup'); // 회원가입 페이지로 이동
+  };
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,7 +53,7 @@ export default function MainScreen() {
 
         <TouchableOpacity 
           style={[styles.button, styles.buttonOutline]}
-        
+          onPress={handleSignUp}
         >
           <Text style={styles.buttonOutlineText}>회원가입</Text>
         </TouchableOpacity>
