@@ -1,6 +1,6 @@
 // hooks/useNoteManager.ts
 import { useEffect, useState } from 'react';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
 import { API_BASE } from '@/utils/api';
 import { getUserId } from '@/utils/auth';
@@ -11,7 +11,7 @@ export const deleteNote = async (noteId: string) => {
     try {
         const noteFolderPath = `${FileSystem.documentDirectory}notes/${noteId}.note/`;
         const info = await FileSystem.getInfoAsync(noteFolderPath);
-        if (info.exists) {
+        if (info.exists) {te-app
             await FileSystem.deleteAsync(noteFolderPath, { idempotent: true });
             console.log(`🗑️ 노트 삭제 완료: ${noteId}`);
         } else {
