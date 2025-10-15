@@ -17,11 +17,12 @@ type Props = {
   setFolderName: (name: string) => void;
   folderColor: string;
   setFolderColor: (color: string) => void;
-  onSubmit: (idOrName?: string, nameMaybe?: string, colorMaybe?: string) => void; // ✅ 색상까지 전달
+  onSubmit: (idOrName?: string, nameMaybe?: string) => void;
   editMode: boolean;
   colorOnly?: boolean;
   nameOnly?: boolean;
-  selectedFolderId?: string | null; // ✅ ID 직접 전달
+  updateColor?: (id: string, color: string) => void;
+  selectedFolderIndex?: number | null;
   folders?: Folder[];
 };
 
@@ -42,23 +43,31 @@ export default function FolderFormModal({
   editMode,
   colorOnly = false,
   nameOnly = false,
-  selectedFolderId,
+  updateColor,
+  selectedFolderIndex,
+  folders,
 }: Props) {
-  // ✅ 색상 클릭 시 이름 변경처럼 onSubmit() 호출
   const handleColorSelect = (color: string) => {
     setFolderColor(color);
 
-    console.log('🎨 색상 선택됨:', color, 'ID:', selectedFolderId);
-
-    // 이름 변경처럼 onSubmit으로 통합
-    if (editMode && selectedFolderId) {
-      onSubmit(selectedFolderId, folderName, color);
-    } else if (selectedFolderId) {
-      onSubmit(selectedFolderId, undefined, color);
+    if (
+      colorOnly &&
+      updateColor &&
+      Array.isArray(folders) &&
+      selectedFolderIndex != null
+    ) {
+      const target = folders[selectedFolderIndex];
+      if (target) {
+        updateColor(target._id, color);
+      }
+    } else if (updateColor && selectedFolderIndex != null && folders) {
+      const target = folders[selectedFolderIndex];
+      if (target) updateColor(target._id, color);
     }
 
-    onClose();
+    onClose(); // ✅ 색상 선택 후 항상 닫기
   };
+
 
   return (
     <Modal transparent visible={visible} animationType="slide">
@@ -104,9 +113,14 @@ export default function FolderFormModal({
             <TouchableOpacity
               style={styles.createButton}
               onPress={() => {
-                if (editMode && selectedFolderId) {
-                  onSubmit(selectedFolderId, folderName, folderColor);
+                if (editMode && folders && selectedFolderIndex != null) {
+                  // ✏️ 이름 변경
+                  const targetFolder = folders[selectedFolderIndex];
+                  if (targetFolder) {
+                    onSubmit(targetFolder._id, folderName);
+                  }
                 } else {
+                  // ➕ 새 폴더 생성
                   onSubmit(folderName);
                 }
                 onClose();
@@ -116,6 +130,7 @@ export default function FolderFormModal({
                 {editMode ? '변경' : '생성'}
               </Text>
             </TouchableOpacity>
+
           )}
 
           <Pressable onPress={onClose}>
