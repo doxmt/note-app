@@ -16,11 +16,13 @@ import FolderFormModal from '@/components/Modals/FolderFormModal';
 import FolderMoveModal from '@/components/Modals/FolderMoveModal';
 import PdfUploadModal from '@/components/Modals/PdfUploadModal';
 import * as Crypto from 'expo-crypto';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { getUserId } from '@/utils/auth'; // 🔥 이 줄이 있어야 getUserId() 사용 가능
 import { useNoteManager, uploadNoteToServer } from '@/hooks/useNoteManager';
 import { Note } from '@/types/note';
 import NoteIcon from '../../assets/images/noteicon.svg';
+import * as Sharing from 'expo-sharing';
+import { API_BASE } from '@/utils/api';
 
 
 
@@ -69,6 +71,40 @@ export default function FolderScreen() {
     }
   }, [currentFolderId]);
 
+    // PDF 편집/뷰어 화면 열기
+    const openEditor = async (note: any) => {
+      const id = note.id || note.noteId;
+      const name = note.name || "제목 없음";
+
+      if (!id) {
+        alert("노트 식별자를 찾을 수 없어요.");
+        return;
+      }
+
+      try {
+        const url = `${API_BASE}/api/notes/${id}/file`;
+        const target = `${FileSystem.documentDirectory}${id}.editor.pdf`;
+
+        console.log("[FolderScreen] 편집용 다운로드 시작:", url);
+
+        const { uri } = await FileSystem.downloadAsync(url, target);
+        console.log("[FolderScreen] 다운로드 완료:", uri);
+
+        const params = {
+          pdfUri: encodeURIComponent(uri),
+          name,
+          noteId: id,
+        };
+
+        router.push({ pathname: "/pdf-editor", params });
+      } catch (e) {
+        console.error("[FolderScreen] PDF 열기 실패:", e);
+        alert("PDF를 여는 중 오류가 발생했어요.");
+      }
+    };
+
+
+
   const buildBreadcrumbString = (folderId: string | null): string => {
     const names: string[] = [];
     let currentId = folderId;
@@ -92,7 +128,7 @@ export default function FolderScreen() {
       hex.substr(20, 12),
     ].join('-');
   };
-  
+
 
   const handleMove = (targetId: string) => {
     if (movingFolderId && targetId !== movingFolderId) {
@@ -140,7 +176,7 @@ export default function FolderScreen() {
       console.error('🚨 PDF 업로드 처리 중 오류:', err);
     }
   };
-  
+
   
   const renderChildFolders = () => {
     return folders
@@ -250,9 +286,9 @@ export default function FolderScreen() {
             {renderChildFolders()}
   
             {/* 📄 노트 목록 */}
-            {notes.map((note) => (
-              <View key={note.id} style={styles.folderContainer}>
-                <TouchableOpacity style={styles.folderItem}>
+            {notes.map((note, index) => (
+              <View key={`${note.id || 'note'}-${index}`} style={styles.folderContainer}>
+                <TouchableOpacity style={styles.folderItem} onPress={() => openEditor(note)}>
                   <NoteIcon width={120} height={120} />
                 </TouchableOpacity>
                 <Text

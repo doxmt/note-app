@@ -239,79 +239,156 @@ export default function QuizModal({ visible, onClose, quizData }: QuizModalProps
 const styles = StyleSheet.create({
   fullscreenOverlay: {
     position: "absolute",
-    top: 105,     // 헤더 높이 (유지)
-    left: 0,     // ✅ 사이드바 영역까지 포함하게 변경
+    top: 105, // 헤더 아래
+    left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    backgroundColor: "#F9FAFB", // 은은한 회색 배경
     zIndex: 999,
   },
 
   quizContainer: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
+
+  /* 🟦 상단바 */
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 18,
+  },
+  roundTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1E3A8A", // 짙은 블루
   },
   exitButton: {
-    backgroundColor: "#999",
-    borderRadius: 8,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
   },
   exitText: {
-    color: "#fff",
+    color: "#111827",
     fontWeight: "600",
     fontSize: 14,
   },
-  center: { alignItems: "center" },
-  roundTitle: { fontSize: 20, fontWeight: "bold" },
-  questionCount: { fontSize: 15, color: "#666", marginBottom: 8 },
-  questionText: { fontSize: 17, marginBottom: 14, color: "#222", fontWeight: "500" },
+
+  /* 🧩 문제 카드 */
+  questionCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+    marginBottom: 20,
+  },
+  questionCount: {
+    fontSize: 15,
+    color: "#6B7280",
+    marginBottom: 10,
+  },
+  questionText: {
+    fontSize: 18,
+    color: "#111827",
+    fontWeight: "600",
+    lineHeight: 26,
+  },
+
+  /* ✏️ 입력창 */
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
+    borderColor: "#CBD5E1",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 16,
     fontSize: 16,
+    backgroundColor: "#F8FAFC",
   },
-  shortText: { color: "#555", fontStyle: "italic", marginVertical: 10 },
+
+  /* 📘 객관식 옵션 */
   option: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingVertical: 10,
+    borderColor: "#E5E7EB",
+    borderRadius: 10,
+    paddingVertical: 12,
     paddingHorizontal: 14,
-    marginBottom: 8,
+    marginTop: 10,
+    backgroundColor: "#fff",
   },
-  optionText: { fontSize: 15, color: "#333" },
-  feedbackBox: { marginTop: 16, alignItems: "center" },
-  correctText: { color: "#4CAF50", fontWeight: "bold", fontSize: 16 },
-  incorrectText: { color: "#F44336", fontWeight: "bold", fontSize: 16 },
+  optionText: {
+    fontSize: 16,
+    color: "#1F2937",
+  },
+
+  /* 🧠 서술형 안내 */
+  shortText: {
+    color: "#6B7280",
+    fontStyle: "italic",
+    marginVertical: 14,
+  },
+
+  /* 💬 피드백 */
+  feedbackBox: {
+    marginTop: 18,
+    alignItems: "center",
+  },
+  correctText: {
+    color: "#16A34A",
+    fontWeight: "700",
+    fontSize: 17,
+  },
+  incorrectText: {
+    color: "#DC2626",
+    fontWeight: "700",
+    fontSize: 17,
+  },
+
+  /* 🔘 버튼들 */
   buttonRow: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 20,
-    gap: 10,
+    gap: 12,
+    marginTop: 28,
   },
   button: {
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    borderRadius: 12,
+    paddingVertical: 13,
+    paddingHorizontal: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  blueButton: { backgroundColor: "#007AFF" },
-  orangeButton: { backgroundColor: "#FF9500" },
-  grayButton: { backgroundColor: "#999" },
-  buttonText: { color: "#fff", fontWeight: "600", fontSize: 15 },
-  summaryText: { fontSize: 16, marginVertical: 4, color: "#333" },
+  blueButton: {
+    backgroundColor: "#2563EB",
+  },
+  orangeButton: {
+    backgroundColor: "#F59E0B",
+  },
+  grayButton: {
+    backgroundColor: "#9CA3AF",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+
+  /* 📊 결과 요약 */
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  summaryText: {
+    fontSize: 17,
+    color: "#374151",
+    marginVertical: 6,
+  },
 });
