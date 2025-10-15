@@ -23,6 +23,8 @@ import { Note } from '@/types/note';
 import NoteIcon from '../../assets/images/noteicon.svg';
 import * as Sharing from 'expo-sharing';
 import { API_BASE } from '@/utils/api';
+import { useNoteActions } from '@/hooks/useNoteActions';
+import RenameNoteModal from '@/components/Modals/RenameNoteModal';
 
 
 
@@ -38,6 +40,15 @@ export default function FolderScreen() {
   const [movingFolderId, setMovingFolderId] = useState<string | null>(null);
   const [pdfModalVisible, setPdfModalVisible] = useState(false);
   const { notes, reloadNotes } = useNoteManager(currentFolderId);
+
+
+  const [optionsVisibleNote, setOptionsVisibleNote] = useState<number | null>(null);
+  const [noteToEdit, setNoteToEdit] = useState<Note | null>(null);
+
+  const { handleNoteAction } = useNoteActions(reloadNotes);
+
+  const [renameModalVisible, setRenameModalVisible] = useState(false);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
 
 
@@ -130,13 +141,36 @@ export default function FolderScreen() {
   };
 
 
-  const handleMove = (targetId: string) => {
-    if (movingFolderId && targetId !== movingFolderId) {
-      moveFolder(movingFolderId, targetId);
+  const handleMove = async (targetId: string | null) => {
+    if (!movingFolderId) return;
+
+    // 현재 이동 대상이 note인지 folder인지 구분
+    const isNote = notes.some(n => n.id === movingFolderId);
+
+    // ✅ "null" 또는 "ROOT"면 루트 이동 처리
+    const safeTargetId = targetId === 'ROOT' || targetId === null ? null : targetId;
+
+    if (isNote) {
+      console.log('📦 PDF 이동 실행:', movingFolderId, '→', safeTargetId ?? '(루트)');
+      // 서버로 이동 요청 (폴더 null 시 루트 이동)
+      await fetch(`${API_BASE}/api/notes/move`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          noteId: movingFolderId,
+          targetFolderId: safeTargetId,
+        }),
+      });
+      reloadNotes();
+    } else {
+      console.log('📦 폴더 이동 실행:', movingFolderId, '→', safeTargetId ?? '(루트)');
+      moveFolder(movingFolderId, safeTargetId);
     }
+
     setMoveModalVisible(false);
     setMovingFolderId(null);
   };
+
 
   const handlePickPdf = async () => {
     console.log('📂 handlePickPdf 함수 시작됨'); 
@@ -198,20 +232,20 @@ export default function FolderScreen() {
           {optionsVisible === index && (
             <View style={styles.dropdownBox}>
               <TouchableOpacity onPress={() => {
-                setSelectedIndex(index);
-                setEditMode(true);
-                setNameOnly(true);
-                setFolderName(folder.name);
-                setFolderModalVisible(true);
-                setOptionsVisible(null);
-              }}>
-                <Text style={styles.dropdownOption}>이름 변경</Text>
-              </TouchableOpacity>
+                    setSelectedFolderId(folder._id); // ✅ index 대신 _id 사용
+                    setEditMode(true);
+                    setNameOnly(true);
+                    setFolderName(folder.name);
+                    setFolderModalVisible(true);
+                    setOptionsVisible(null);
+                  }}>
+                    <Text style={styles.dropdownOption}>이름 변경</Text>
+                  </TouchableOpacity>
               <TouchableOpacity onPress={() => deleteFolder(folder._id)}>
                 <Text style={styles.dropdownOption}>폴더 삭제</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => {
-                setSelectedIndex(index);
+                setSelectedFolderId(folder._id); // ✅ 변경
                 setEditMode(false);
                 setColorEditMode(true);
                 setFolderColor(folder.color || '#FFD700');
@@ -220,6 +254,7 @@ export default function FolderScreen() {
               }}>
                 <Text style={styles.dropdownOption}>색상 변경</Text>
               </TouchableOpacity>
+
               <TouchableOpacity onPress={() => {
                 setMovingFolderId(folder._id);
                 setMoveModalVisible(true);
@@ -288,16 +323,62 @@ export default function FolderScreen() {
             {/* 📄 노트 목록 */}
             {notes.map((note, index) => (
               <View key={`${note.id || 'note'}-${index}`} style={styles.folderContainer}>
+                {/* 노트 아이콘 */}
                 <TouchableOpacity style={styles.folderItem} onPress={() => openEditor(note)}>
                   <NoteIcon width={120} height={120} />
                 </TouchableOpacity>
-                <Text
-                  style={styles.folderText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {note.name}
-                </Text>
+
+                {/* 제목 + ▼ 버튼 */}
+                <View style={styles.folderLabelRow}>
+                  <Text style={styles.folderText}>{note.name}</Text>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setOptionsVisibleNote(optionsVisibleNote === index ? null : index)
+                    }
+                  >
+                    <Text style={styles.dropdown}>▼</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* 드롭다운 메뉴 */}
+                {optionsVisibleNote === index && (
+                  <View style={styles.dropdownBox}>
+                    {/* 이름 변경 */}
+                    <TouchableOpacity
+                      onPress={() => {
+                        const noteId = note.id || note.noteId || note._id;
+                        console.log('🧩 이름 변경 클릭됨, noteId:', noteId);
+                        setSelectedNoteId(noteId);
+                        setRenameModalVisible(true);
+                        setOptionsVisibleNote(null);
+                      }}
+                    >
+                      <Text style={styles.dropdownOption}>이름 변경</Text>
+                    </TouchableOpacity>
+
+                    {/* 삭제 */}
+                    <TouchableOpacity
+                      onPress={async () => {
+                        await handleNoteAction('delete', note.noteId);
+                        setOptionsVisibleNote(null);
+                      }}
+                    >
+                      <Text style={styles.dropdownOption}>삭제</Text>
+                    </TouchableOpacity>
+
+                    {/* PDF 이동 */}
+                    <TouchableOpacity
+                      onPress={() => {
+                        setMovingFolderId(note.noteId);
+                        setMoveModalVisible(true);
+                        setOptionsVisibleNote(null);
+                      }}
+                    >
+                      <Text style={styles.dropdownOption}>PDF 이동</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
               </View>
             ))}
           </View>
@@ -320,26 +401,25 @@ export default function FolderScreen() {
   
       <FolderFormModal
         visible={folderModalVisible}
-        onClose={() => {
-          setFolderModalVisible(false);
-          setEditMode(false);
-          setColorEditMode(false);
-          setNameOnly(false);
-          setFolderName('');
-          setFolderColor('#FFD700');
-        }}
+        onClose={() => setFolderModalVisible(false)}
         folderName={folderName}
         setFolderName={setFolderName}
         folderColor={folderColor}
         setFolderColor={setFolderColor}
-        onSubmit={editMode ? renameFolder : createFolder}
         editMode={editMode}
         colorOnly={colorEditMode}
         nameOnly={nameOnly}
-        updateColor={updateFolderColor}
-        selectedFolderIndex={selectedIndex}
-        folders={folders}
+        selectedFolderId={selectedFolderId}
+        onSubmit={(idOrName, nameMaybe, colorMaybe) => {
+          if (idOrName && nameMaybe && !colorMaybe) renameFolder(idOrName, nameMaybe);
+          else if (idOrName && colorMaybe) updateFolderColor(idOrName, colorMaybe);
+          else createFolder();
+        }}
       />
+
+
+
+
   
       <FolderMoveModal
             visible={moveModalVisible}

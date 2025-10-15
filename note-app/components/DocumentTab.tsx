@@ -33,6 +33,10 @@ import FolderFormModal from './Modals/FolderFormModal';
 import FolderMoveModal from './Modals/FolderMoveModal';
 import PdfUploadModal from './Modals/PdfUploadModal';
 
+import { useNoteActions } from '@/hooks/useNoteActions';
+import RenameNoteModal from '@/components/Modals/RenameNoteModal';
+
+
 // ─────────────────────────────────────────────────────────────
 // UUID
 const generateUUID = async (): Promise<string> => {
@@ -87,6 +91,7 @@ export default function DocumentTab() {
 
     // 노트 훅 (루트의 노트만 표시)
     const { notes: rootNotes, reloadNotes } = useNoteManager(null);
+    const { handleNoteAction } = useNoteActions(reloadNotes);
 
     // 로컬 상태
     const [actionModalVisible, setActionModalVisible] = useState(false);
@@ -97,14 +102,38 @@ export default function DocumentTab() {
     const [currentFolderId] = useState<string | null>(null);
     const [nameOnly, setNameOnly] = useState(false);
 
+    const [optionsVisibleNote, setOptionsVisibleNote] = useState<number | null>(null);
+    const [noteToEdit, setNoteToEdit] = useState<Note | null>(null);
+
+    const [renameModalVisible, setRenameModalVisible] = useState(false);
+    const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+
+
+
+
     // 폴더 이동
-    const handleMove = (targetId: string) => {
-        if (movingFolderId && targetId !== movingFolderId) {
-            moveFolder(movingFolderId, targetId);
-        }
-        setMoveModalVisible(false);
-        setMovingFolderId(null);
+    const handleMove = async (targetId: string) => {
+      if (!movingFolderId) return;
+
+      // 1️⃣ 현재 이동 대상이 note인지 folder인지 구분
+      const isNote = rootNotes.some((n) => pickNoteId(n) === movingFolderId);
+
+      const safeTargetId = targetId === 'ROOT' || targetId === null ? null : targetId;
+
+      if (isNote) {
+        // 🧩 노트 이동
+        console.log('📦 노트 이동 실행:', movingFolderId, '→', targetId);
+        await handleNoteAction('move', movingFolderId, { targetFolderId: targetId });
+      } else {
+        // 📁 폴더 이동
+        console.log('📦 폴더 이동 실행:', movingFolderId, '→', targetId);
+        moveFolder(movingFolderId, targetId);
+      }
+
+      setMoveModalVisible(false);
+      setMovingFolderId(null);
     };
+
 
     // PDF 업로드 → 로컬 보관 → 메타 작성 → 서버 메타 업로드
     const handlePickPdf = async () => {
@@ -279,29 +308,76 @@ export default function DocumentTab() {
                             </View>
                         ))}
 
-                    {/* 📄 루트 노트 목록 (PDF 아이콘) */}
-                    {rootNotes.map((note: any) => {
-                        const id = pickNoteId(note);
-                        return (
-                            <View key={id} style={styles.folderContainer}>
-                                {/* --- 2. onPress 이벤트를 openEditor로 변경 --- */}
-                                <TouchableOpacity
-                                    style={styles.folderItem}
-                                    onPress={() => openEditor(note)} // 짧게 터치해도 편집 열기
-                                    // onLongPress는 더 이상 필요 없으므로 삭제
-                                >
-                                    <NoteIcon width={120} height={120} />
-                                </TouchableOpacity>
-                                <Text
-                                    style={styles.folderText}
-                                    numberOfLines={1}
-                                    ellipsizeMode="tail"
-                                >
-                                    {pickNoteName(note)}
-                                </Text>
+                    {/* 📄 루트 노트 목록 (PDF 아이콘 + 드롭다운) */}
+                    {rootNotes.map((note: any, index: number) => {
+                      const id = pickNoteId(note);
+                      return (
+                        <View key={id} style={styles.folderContainer}>
+                          {/* PDF 아이콘 */}
+                          <TouchableOpacity
+                            style={styles.folderItem}
+                            onPress={() => openEditor(note)}
+                          >
+                            <NoteIcon width={120} height={120} />
+                          </TouchableOpacity>
+
+                          {/* 제목 + ▼ 드롭다운 */}
+                          <View style={styles.folderLabelRow}>
+                            <Text style={styles.folderText}>{pickNoteName(note)}</Text>
+                            <TouchableOpacity
+                              onPress={() =>
+                                setOptionsVisibleNote(optionsVisibleNote === index ? null : index)
+                              }
+                            >
+                              <Text style={styles.dropdown}>▼</Text>
+                            </TouchableOpacity>
+                          </View>
+
+                          {/* 드롭다운 메뉴 */}
+                          {optionsVisibleNote === index && (
+                            <View style={styles.dropdownBox}>
+                              {/* 이름 변경 */}
+                              <TouchableOpacity
+                                onPress={() => {
+                                  const noteId = note.id || note.noteId || note._id; // 안전하게
+                                  console.log('🧩 이름 변경 클릭됨, noteId:', noteId);
+                                  setSelectedNoteId(noteId);
+                                  setRenameModalVisible(true);
+                                  setOptionsVisibleNote(null);
+                                }}
+
+                              >
+                                <Text style={styles.dropdownOption}>이름 변경</Text>
+                              </TouchableOpacity>
+
+
+                              {/* 삭제 */}
+                              <TouchableOpacity
+                                onPress={async () => {
+                                await handleNoteAction('delete', note.noteId);
+                                  setOptionsVisibleNote(null);
+                                }}
+                              >
+                                <Text style={styles.dropdownOption}>삭제</Text>
+                              </TouchableOpacity>
+
+                              {/* PDF 이동 */}
+                              <TouchableOpacity
+                                onPress={() => {
+                                  setMovingFolderId(note.noteId);
+                                  setMoveModalVisible(true);
+                                  setOptionsVisibleNote(null);
+                                }}
+                              >
+                                <Text style={styles.dropdownOption}>PDF 이동</Text>
+                              </TouchableOpacity>
                             </View>
-                        );
+                          )}
+
+                        </View>
+                      );
                     })}
+
                 </View>
             </ScrollView>
 
@@ -351,6 +427,22 @@ export default function DocumentTab() {
                     setMovingFolderId(null);
                 }}
             />
+
+            <RenameNoteModal
+              visible={renameModalVisible}
+              onClose={() => setRenameModalVisible(false)}
+              onSubmit={async (newName) => {
+                console.log('📢 RenameNoteModal onSubmit 실행됨:', newName, selectedNoteId);
+                if (selectedNoteId) {
+                  await handleNoteAction('rename', selectedNoteId, { newName });
+                } else {
+                  console.log('⚠️ selectedNoteId 없음!');
+                }
+                setRenameModalVisible(false);
+              }}
+            />
+
+
 
             <PdfUploadModal
                 visible={pdfModalVisible}

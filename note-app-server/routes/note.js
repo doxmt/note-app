@@ -203,4 +203,81 @@ router.get('/:noteId/file', async (req, res) => {
     }
 });
 
+/**
+ * 4) 노트 메타데이터 수정 (이름 변경, 폴더 이동 등)
+ *    PUT /api/notes/:noteId
+ *    body: { name?, folderId? }
+ */
+router.put('/:noteId', async (req, res) => {
+  try {
+    const { noteId } = req.params;
+    const { name, folderId } = req.body;
+
+    if (!noteId) return res.status(400).json({ error: 'noteId 필요' });
+
+    const updateFields = {};
+    if (name !== undefined) updateFields.name = name;
+
+    // ✅ 이 줄 덕분에 "null" 문자열 → null 로 변환
+    if (folderId !== undefined)
+      updateFields.folderId = normalizeFolderId(folderId);
+
+    // ✅ DB 연결
+    const db = mongoose.connection.db;
+    if (!db) return res.status(500).json({ error: 'DB 연결 미확립' });
+
+    // ✅ Note 컬렉션에서 업데이트
+    const result = await Note.findOneAndUpdate(
+      { noteId },
+      { $set: updateFields },
+      { new: true } // 업데이트된 문서 반환
+    );
+
+    if (!result) {
+      return res.status(404).json({ error: '해당 noteId를 찾을 수 없습니다.' });
+    }
+
+    console.log(`📝 노트 업데이트 성공: ${noteId} → ${JSON.stringify(updateFields)}`);
+    return res.json({ message: '노트 업데이트 성공', note: result });
+  } catch (err) {
+    console.error('🚨 노트 업데이트 실패:', err);
+    return res.status(500).json({ error: '서버 오류로 노트 업데이트 실패' });
+  }
+});
+
+
+/**
+ * 5) 노트 삭제
+ *    DELETE /api/notes/:noteId
+ */
+router.delete('/:noteId', async (req, res) => {
+  try {
+    const { noteId } = req.params;
+    if (!noteId) return res.status(400).json({ error: 'noteId 필요' });
+
+    const db = mongoose.connection.db;
+    if (!db) return res.status(500).json({ error: 'DB 연결 미확립' });
+
+    const note = await Note.findOne({ noteId });
+    if (!note) return res.status(404).json({ error: '노트 없음' });
+
+    const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'pdfs' });
+    if (note.fileId) {
+      try {
+        await bucket.delete(new ObjectId(note.fileId));
+      } catch (e) {
+        console.warn('⚠️ GridFS 파일 삭제 실패(무시 가능):', e.message);
+      }
+    }
+
+    await Note.deleteOne({ noteId });
+    console.log(`🗑️ 노트 삭제 완료: ${noteId}`);
+    return res.json({ message: '삭제 완료' });
+  } catch (err) {
+    console.error('🚨 노트 삭제 실패:', err);
+    return res.status(500).json({ error: '서버 오류로 노트 삭제 실패' });
+  }
+});
+
+
 module.exports = router;

@@ -108,74 +108,78 @@ const [folders, setFolders] = useState<Folder[]>([]);
   
     setOptionsVisible(null);
   };
-  
-  
 
-  const renameFolder = async () => {
-    if (folderName.trim() === '' || selectedIndex === null) return;
-    const targetFolder = folders[selectedIndex];
-    if (!targetFolder) return;
-  
+  // ✏️ 폴더 이름 변경
+  const renameFolder = async (folderId: string, newName: string) => {
+      console.log('📦 rename 요청:', { folderId, newName });
+
+    if (!folderId || !newName || !newName.trim()) return;
     try {
       const res = await axios.patch(`${API_BASE}/api/folders/rename`, {
-        folderId: targetFolder._id,
-        newName: folderName,
+        folderId,
+        newName,
       });
-  
+
       if (res.status === 200) {
-        const updated = [...folders];
-        updated[selectedIndex] = { ...targetFolder, name: folderName };
-        setFolders(updated);
+        // ✅ 클라이언트 상태 즉시 반영
+        setFolders((prev) =>
+          prev.map((folder) =>
+            folder._id === folderId ? { ...folder, name: newName } : folder
+          )
+        );
+        console.log('✅ 폴더 이름 변경 성공:', newName);
       }
-  
     } catch (error: any) {
-      console.error('이름 변경 실패:', error.response?.data || error.message);
+      console.error('폴더 이름 변경 실패:', error.response?.data || error.message);
     }
-  
-    setFolderName('');
-    setSelectedIndex(null);
-    setEditMode(false);
-    setFolderModalVisible(false);
   };
-  
+
+  // 🎨 폴더 색상 변경
   const updateFolderColor = async (folderId: string, newColor: string) => {
     try {
       const res = await axios.patch(`${API_BASE}/api/folders/color`, {
         folderId,
-        newColor,
+        color: newColor,
       });
-  
+
       if (res.status === 200) {
-        const updated = folders.map(folder =>
-          folder._id === folderId ? { ...folder, color: newColor } : folder
+        setFolders((prev) =>
+          prev.map((folder) =>
+            folder._id === folderId ? { ...folder, color: newColor } : folder
+          )
         );
-        setFolders(updated);
+        console.log('✅ 폴더 색상 변경 성공:', newColor);
       }
     } catch (error: any) {
-      console.error('색상 변경 실패:', error.response?.data || error.message);
+      console.error('폴더 색상 변경 실패:', error.response?.data || error.message);
     }
-  
-    setOptionsVisible(null);
-    setFolderColor('#fff');
   };
 
-  const moveFolder = async (sourceId: string, targetId: string) => {
+
+  const moveFolder = async (sourceId: string, targetId: string | null) => {
     try {
+      // ✅ "null" 문자열을 진짜 null로 변환
+      const safeTargetId = !targetId || targetId === 'null' || targetId === 'undefined'
+        ? null
+        : targetId;
+
       const res = await axios.patch(`${API_BASE}/api/folders/move`, {
         folderId: sourceId,
-        newParentId: targetId,
+        newParentId: safeTargetId,
       });
-  
+
       if (res.status === 200) {
         const updated = folders.map(folder =>
-          folder._id === sourceId ? { ...folder, parentId: targetId } : folder
+          folder._id === sourceId ? { ...folder, parentId: safeTargetId } : folder
         );
         setFolders(updated);
+        console.log('✅ 폴더 이동 성공:', sourceId, '→', safeTargetId ?? '(루트)');
       }
     } catch (error: any) {
       console.error('폴더 이동 실패:', error.response?.data || error.message);
     }
   };
+
   
   
   

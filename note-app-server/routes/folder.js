@@ -4,6 +4,7 @@ const Folder = require('../models/Folder');
 const mongoose = require('mongoose');
 
 
+
 router.get('/list', async (req, res) => {
   const { userId } = req.query;
 
@@ -63,16 +64,7 @@ router.get('/children', async (req, res) => {
   }
 });
 
-router.patch('/rename', async (req, res) => {
-  const { folderId, newName } = req.body;
-  try {
-    await Folder.findByIdAndUpdate(folderId, { name: newName });
-    res.status(200).json({ message: '이름 변경 성공' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: '이름 변경 실패' });
-  }
-});
+
 
 const deleteFolderAndChildren = async (folderId) => {
   // 1. 하위 폴더들 가져오기
@@ -101,21 +93,60 @@ router.post('/delete', async (req, res) => {
   }
 });
 
-router.patch('/color', async (req, res) => {
-  const { folderId, newColor } = req.body;
+const { ObjectId } = require('mongoose').Types;
 
-  if (!folderId || !newColor) {
-    return res.status(400).json({ message: 'folderId와 newColor가 필요합니다.' });
+// PATCH /api/folders/rename
+router.patch('/rename', async (req, res) => {
+  const { folderId, newName } = req.body;
+
+  if (!folderId || !newName?.trim()) {
+    return res.status(400).json({ message: 'folderId와 newName이 필요합니다.' });
   }
 
   try {
-    await Folder.findByIdAndUpdate(folderId, { color: newColor });
-    res.status(200).json({ message: '색상 변경 완료' });
+    const folder = await Folder.findByIdAndUpdate(
+      folderId,
+      { name: newName.trim() },
+      { new: true }
+    );
+
+    if (!folder) {
+      return res.status(404).json({ message: '해당 폴더를 찾을 수 없습니다.' });
+    }
+
+    res.status(200).json({ message: '폴더 이름 변경 성공', folder });
   } catch (err) {
-    console.error('색상 변경 실패:', err);
-    res.status(500).json({ message: '색상 변경 실패' });
+    console.error('폴더 이름 변경 실패:', err);
+    res.status(500).json({ message: '서버 오류로 이름 변경 실패' });
   }
 });
+
+// PATCH /api/folders/color
+router.patch('/color', async (req, res) => {
+  const { folderId, color } = req.body;
+
+  if (!folderId || !color) {
+    return res.status(400).json({ message: 'folderId와 color가 필요합니다.' });
+  }
+
+  try {
+    const folder = await Folder.findByIdAndUpdate(
+      folderId,
+      { color },
+      { new: true }
+    );
+
+    if (!folder) {
+      return res.status(404).json({ message: '해당 폴더를 찾을 수 없습니다.' });
+    }
+
+    res.status(200).json({ message: '폴더 색상 변경 성공', folder });
+  } catch (err) {
+    console.error('폴더 색상 변경 실패:', err);
+    res.status(500).json({ message: '서버 오류로 색상 변경 실패' });
+  }
+});
+
 
 router.patch('/move', async (req, res) => {
   const { folderId, newParentId } = req.body;
@@ -126,6 +157,8 @@ router.patch('/move', async (req, res) => {
     }
 
     // parentId는 null이 될 수 있음 (최상위 폴더로 이동할 때)
+     const safeParentId = !newParentId || newParentId === 'null' ? null : newParentId;
+
     await Folder.findByIdAndUpdate(folderId, {
       parentId: newParentId || null,
     });

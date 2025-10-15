@@ -17,12 +17,11 @@ type Props = {
   setFolderName: (name: string) => void;
   folderColor: string;
   setFolderColor: (color: string) => void;
-  onSubmit: () => void;
+  onSubmit: (idOrName?: string, nameMaybe?: string, colorMaybe?: string) => void; // ✅ 색상까지 전달
   editMode: boolean;
   colorOnly?: boolean;
   nameOnly?: boolean;
-  updateColor?: (id: string, color: string) => void;
-  selectedFolderIndex?: number | null;
+  selectedFolderId?: string | null; // ✅ ID 직접 전달
   folders?: Folder[];
 };
 
@@ -43,25 +42,22 @@ export default function FolderFormModal({
   editMode,
   colorOnly = false,
   nameOnly = false,
-  updateColor,
-  selectedFolderIndex,
-  folders,
+  selectedFolderId,
 }: Props) {
+  // ✅ 색상 클릭 시 이름 변경처럼 onSubmit() 호출
   const handleColorSelect = (color: string) => {
-    if (
-      colorOnly &&
-      updateColor &&
-      Array.isArray(folders) &&
-      selectedFolderIndex != null
-    ) {
-      const target = folders[selectedFolderIndex];
-      if (target) {
-        updateColor(target._id, color);
-        onClose();
-      }
-    } else {
-      setFolderColor(color);
+    setFolderColor(color);
+
+    console.log('🎨 색상 선택됨:', color, 'ID:', selectedFolderId);
+
+    // 이름 변경처럼 onSubmit으로 통합
+    if (editMode && selectedFolderId) {
+      onSubmit(selectedFolderId, folderName, color);
+    } else if (selectedFolderId) {
+      onSubmit(selectedFolderId, undefined, color);
     }
+
+    onClose();
   };
 
   return (
@@ -105,7 +101,17 @@ export default function FolderFormModal({
           )}
 
           {!colorOnly && (
-            <TouchableOpacity style={styles.createButton} onPress={onSubmit}>
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={() => {
+                if (editMode && selectedFolderId) {
+                  onSubmit(selectedFolderId, folderName, folderColor);
+                } else {
+                  onSubmit(folderName);
+                }
+                onClose();
+              }}
+            >
               <Text style={styles.createButtonText}>
                 {editMode ? '변경' : '생성'}
               </Text>

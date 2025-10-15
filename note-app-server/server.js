@@ -2,9 +2,9 @@
 
 // server.js
 
-//핫스팟 사용시
-const dns = require('node:dns');
-dns.setServers(['8.8.8.8', '1.1.1.1']);
+////핫스팟 사용시
+//const dns = require('node:dns');
+//dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -27,6 +27,8 @@ const userRouter   = require('./routes/user');
 app.use('/api/notes', notesRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/user', userRouter);
+
+
 
 // 4) 헬스체크
 app.get('/', (_req, res) => res.send('서버 연결 성공!'));

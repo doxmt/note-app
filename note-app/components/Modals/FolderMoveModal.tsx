@@ -1,4 +1,3 @@
-// components/Modals/FolderMoveModal.tsx
 import React from 'react';
 import {
   Modal,
@@ -16,7 +15,7 @@ type Props = {
   visible: boolean;
   folders: Folder[];
   onClose: () => void;
-  onSelect: (targetId: string) => void;
+  onSelect: (targetId: string | null) => void; // ✅ null 허용
   excludeId?: string | null; // 자신이나 자식 폴더 선택 방지
 };
 
@@ -42,9 +41,20 @@ const FolderMoveModal = ({ visible, folders, onClose, onSelect, excludeId }: Pro
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <Text style={styles.title}>폴더를 어디로 이동할까요?</Text>
+
           <ScrollView style={styles.scrollContainer}>
+            {/* ✅ 최상위 이동 버튼 */}
+            <TouchableOpacity
+              style={[styles.folderRow, styles.rootRow]}
+              onPress={() => onSelect(null)} // ✅ targetId=null → 루트로 이동
+            >
+              <Text style={[styles.folderText, styles.rootText]}>🏠 최상위로 이동</Text>
+            </TouchableOpacity>
+
+            {/* 📁 폴더 트리 */}
             {renderTree()}
           </ScrollView>
+
           <Pressable onPress={onClose}>
             <Text style={styles.cancel}>취소</Text>
           </Pressable>
@@ -53,7 +63,6 @@ const FolderMoveModal = ({ visible, folders, onClose, onSelect, excludeId }: Pro
     </Modal>
   );
 };
-
 
 const styles = StyleSheet.create({
   overlay: {
@@ -83,12 +92,21 @@ const styles = StyleSheet.create({
   folderText: {
     fontSize: 16,
   },
+  rootRow: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    marginBottom: 6,
+  },
+  rootText: {
+    fontWeight: '600',
+    color: '#333',
+  },
   cancel: {
     marginTop: 16,
     textAlign: 'center',
     color: '#999',
   },
 });
-
 
 export default FolderMoveModal;
