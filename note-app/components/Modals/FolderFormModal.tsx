@@ -51,22 +51,20 @@ export default function FolderFormModal({
   folders,
   selectedFolderId,
 }: Props) {
+
   const handleColorSelect = (color: string) => {
     setFolderColor(color);
 
-    if (
-      colorOnly &&
-      updateColor &&
-      Array.isArray(folders) &&
-      selectedFolderIndex != null
-    ) {
-      const target = folders[selectedFolderIndex];
-      if (target) {
-        updateColor(target._id, color);
+    if (updateColor) {
+      // ✅ 1️⃣ 루트 폴더 (DocumentTab): index 기반
+      if (Array.isArray(folders) && selectedFolderIndex != null) {
+        const target = folders[selectedFolderIndex];
+        if (target) updateColor(target._id, color);
       }
-    } else if (updateColor && selectedFolderIndex != null && folders) {
-      const target = folders[selectedFolderIndex];
-      if (target) updateColor(target._id, color);
+      // ✅ 2️⃣ 하위 폴더 ([id].tsx): id 기반
+      else if (folders && selectedFolderId) {
+        updateColor(selectedFolderId, color);
+      }
     }
 
     onClose(); // ✅ 색상 선택 후 항상 닫기
