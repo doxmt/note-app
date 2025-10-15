@@ -16,6 +16,7 @@ import { getUserId } from "@/utils/auth";
 import { API_BASE, API_BASE_QUIZ } from "@/utils/api"; // ✅ Node + Flask 둘 다 import
 import { useFolderManager } from "@/hooks/useFolderManager";
 import { useNoteManager } from "@/hooks/useNoteManager";
+import QuizModal from "@/components/Modals/QuizModal";
 
 export default function AiTab() {
   const [loading, setLoading] = useState(false);
@@ -25,6 +26,9 @@ export default function AiTab() {
 
   const { folders } = useFolderManager();
   const { notes } = useNoteManager();
+
+  const [quizModalVisible, setQuizModalVisible] = useState(false);
+  const [quizData, setQuizData] = useState<any>(null);
 
   // 📄 PDF 직접 업로드
   const pickDocument = async () => {
@@ -125,7 +129,9 @@ export default function AiTab() {
       }
 
       console.log("✅ 문제 생성 완료:", result);
-      alert("문제 생성이 완료되었습니다!");
+      setQuizData(result);
+      setQuizModalVisible(true);
+
     } catch (error: any) {
       console.error("❌ 문제 생성 오류:", error);
       alert(error.message || "문제 생성 중 오류가 발생했습니다.");
@@ -199,6 +205,14 @@ export default function AiTab() {
         onClose={() => setModalVisible(false)}
         onSelectPdf={(noteId, title) => handlePdfSelect(noteId, title)}
       />
+
+       {quizModalVisible && quizData && (
+              <QuizModal
+                visible={quizModalVisible}
+                onClose={() => setQuizModalVisible(false)}
+                quizData={quizData}
+              />
+            )}
     </View>
   );
 }

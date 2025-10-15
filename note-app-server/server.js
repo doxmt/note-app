@@ -1,6 +1,8 @@
 
 
 // server.js
+
+//핫스팟 사용시
 const dns = require('node:dns');
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
