@@ -144,32 +144,45 @@ export default function FolderScreen() {
   const handleMove = async (targetId: string | null) => {
     if (!movingFolderId) return;
 
-    // 현재 이동 대상이 note인지 folder인지 구분
-    const isNote = notes.some(n => n.id === movingFolderId);
+    const isNote = notes.some(
+      (n) => n.id === movingFolderId || n.noteId === movingFolderId || n._id === movingFolderId
+    );
 
-    // ✅ "null" 또는 "ROOT"면 루트 이동 처리
     const safeTargetId = targetId === 'ROOT' || targetId === null ? null : targetId;
 
-    if (isNote) {
-      console.log('📦 PDF 이동 실행:', movingFolderId, '→', safeTargetId ?? '(루트)');
-      // 서버로 이동 요청 (폴더 null 시 루트 이동)
-      await fetch(`${API_BASE}/api/notes/move`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          noteId: movingFolderId,
-          targetFolderId: safeTargetId,
-        }),
-      });
-      reloadNotes();
-    } else {
-      console.log('📦 폴더 이동 실행:', movingFolderId, '→', safeTargetId ?? '(루트)');
-      moveFolder(movingFolderId, safeTargetId);
-    }
+    try {
+      if (isNote) {
+        console.log('📦 PDF 이동 실행:', movingFolderId, '→', safeTargetId ?? '(루트)');
+        const res = await fetch(`${API_BASE}/api/notes/${movingFolderId}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        folderId: safeTargetId, // ✅ key는 folderId
+                      }),
+                    });
 
-    setMoveModalVisible(false);
-    setMovingFolderId(null);
+
+        if (!res.ok) {
+          const text = await res.text(); // 🔍 원문 확인용
+          console.error('🚨 서버 응답 원문:', text);
+          throw new Error(`서버 응답 오류: ${res.status}`);
+        }
+
+
+        reloadNotes();
+      } else {
+        console.log('📦 폴더 이동 실행:', movingFolderId, '→', safeTargetId ?? '(루트)');
+        moveFolder(movingFolderId, safeTargetId);
+      }
+    } catch (error: any) {
+      console.error('🚨 이동 실패:', error.message || error);
+      alert('이동 중 오류가 발생했습니다.');
+    } finally {
+      setMoveModalVisible(false);
+      setMovingFolderId(null);
+    }
   };
+
 
 
   const handlePickPdf = async () => {
@@ -442,6 +455,22 @@ export default function FolderScreen() {
         }}
         currentFolderId={currentFolderId}
       />
+
+      <RenameNoteModal
+        visible={renameModalVisible}
+        onClose={() => setRenameModalVisible(false)}
+        onSubmit={async (newName) => {
+          console.log('📢 RenameNoteModal onSubmit 실행됨:', newName, selectedNoteId);
+          if (selectedNoteId) {
+            await handleNoteAction('rename', selectedNoteId, { newName });
+          } else {
+            console.warn('⚠️ selectedNoteId 없음!');
+          }
+          setRenameModalVisible(false);
+        }}
+      />
+
+
     </View>
   );
 }
