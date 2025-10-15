@@ -17,14 +17,17 @@ type Props = {
   setFolderName: (name: string) => void;
   folderColor: string;
   setFolderColor: (color: string) => void;
-  onSubmit: (idOrName?: string, nameMaybe?: string) => void;
+  onSubmit: (idOrName?: string, nameMaybe?: string, colorMaybe?: string) => void;
   editMode: boolean;
   colorOnly?: boolean;
   nameOnly?: boolean;
   updateColor?: (id: string, color: string) => void;
   selectedFolderIndex?: number | null;
+  selectedFolderId?: string | null; // ✅ 추가
   folders?: Folder[];
+
 };
+
 
 const colors = [
   '#999', '#FFD700', '#FF7F50', '#87CEFA', '#90EE90',
@@ -46,6 +49,7 @@ export default function FolderFormModal({
   updateColor,
   selectedFolderIndex,
   folders,
+  selectedFolderId,
 }: Props) {
   const handleColorSelect = (color: string) => {
     setFolderColor(color);
@@ -113,16 +117,21 @@ export default function FolderFormModal({
             <TouchableOpacity
               style={styles.createButton}
               onPress={() => {
-                if (editMode && folders && selectedFolderIndex != null) {
-                  // ✏️ 이름 변경
-                  const targetFolder = folders[selectedFolderIndex];
-                  if (targetFolder) {
-                    onSubmit(targetFolder._id, folderName);
+                if (editMode) {
+                  // ✅ 1️⃣ 인덱스 기반 (DocumentTab)
+                  if (folders && selectedFolderIndex != null) {
+                    const targetFolder = folders[selectedFolderIndex];
+                    if (targetFolder) onSubmit(targetFolder._id, folderName);
+                  }
+                  // ✅ 2️⃣ ID 기반 (하위 폴더)
+                  else if (folders && selectedFolderId) {
+                    onSubmit(selectedFolderId, folderName);
                   }
                 } else {
                   // ➕ 새 폴더 생성
                   onSubmit(folderName);
                 }
+
                 onClose();
               }}
             >
@@ -130,6 +139,7 @@ export default function FolderFormModal({
                 {editMode ? '변경' : '생성'}
               </Text>
             </TouchableOpacity>
+
 
           )}
 

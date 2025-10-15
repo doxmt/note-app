@@ -398,24 +398,26 @@ export default function FolderScreen() {
           setActionModalVisible(false);
         }}
       />
-  
-      <FolderFormModal
-        visible={folderModalVisible}
-        onClose={() => setFolderModalVisible(false)}
-        folderName={folderName}
-        setFolderName={setFolderName}
-        folderColor={folderColor}
-        setFolderColor={setFolderColor}
-        editMode={editMode}
-        colorOnly={colorEditMode}
-        nameOnly={nameOnly}
-        selectedFolderId={selectedFolderId}
-        onSubmit={(idOrName, nameMaybe, colorMaybe) => {
-          if (idOrName && nameMaybe && !colorMaybe) renameFolder(idOrName, nameMaybe);
-          else if (idOrName && colorMaybe) updateFolderColor(idOrName, colorMaybe);
-          else createFolder();
-        }}
-      />
+  <FolderFormModal
+    visible={folderModalVisible}
+    onClose={() => setFolderModalVisible(false)}
+    folderName={folderName}
+    setFolderName={setFolderName}
+    folderColor={folderColor}
+    setFolderColor={setFolderColor}
+    editMode={editMode}
+    colorOnly={colorEditMode}
+    nameOnly={nameOnly}
+    selectedFolderId={selectedFolderId} // ✅ 추가
+    updateColor={updateFolderColor}
+    folders={folders}
+    onSubmit={(idOrName, nameMaybe, colorMaybe) => {
+      if (idOrName && nameMaybe && !colorMaybe) renameFolder(idOrName, nameMaybe);
+      else if (idOrName && colorMaybe) updateFolderColor(idOrName, colorMaybe);
+      else createFolder();
+    }}
+  />
+
 
 
 
