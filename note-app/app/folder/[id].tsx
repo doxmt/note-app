@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+
+import { Image } from 'react-native';
 import {
   View,
   Text,
@@ -10,7 +12,7 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import { useFolderManager } from '@/hooks/useFolderManager';
 import PlusIcon from '../../assets/images/square-plus-button-icon.svg';
-import FolderIcon from '../../assets/images/folder.svg';
+import FolderIcon from '../../assets/images/folder2.svg';
 import AddOptionsModal from '@/components/Modals/AddOptionsModal';
 import FolderFormModal from '@/components/Modals/FolderFormModal';
 import FolderMoveModal from '@/components/Modals/FolderMoveModal';
@@ -22,9 +24,48 @@ import { useNoteManager, uploadNoteToServer } from '@/hooks/useNoteManager';
 import { Note } from '@/types/note';
 import NoteIcon from '../../assets/images/noteicon.svg';
 import * as Sharing from 'expo-sharing';
-import { API_BASE } from '@/utils/api';
+import { API_BASE, BASE_URL } from '@/utils/api';
 import { useNoteActions } from '@/hooks/useNoteActions';
 import RenameNoteModal from '@/components/Modals/RenameNoteModal';
+import PdfThumbnail from 'react-native-pdf-thumbnail';
+
+function PdfPreviewItem({ note, onPress }: { note: any; onPress: () => void }) {
+  const [thumbUri, setThumbUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (note.pageImageIds && note.pageImageIds.length > 0) {
+      // ✅ 서버에 저장된 첫 번째 페이지 이미지 사용
+      setThumbUri(`${BASE_URL}/api/notes/page/${note.pageImageIds[0]}`);
+    }
+  }, [note.pageImageIds]);
+
+  return (
+    <TouchableOpacity style={styles.folderItem} onPress={onPress}>
+      {thumbUri ? (
+        <Image
+          source={{ uri: thumbUri }}
+          style={{ width: 170, height: 120, borderRadius: 12 }}
+          resizeMode="cover"
+        />
+      ) : (
+        <View
+          style={{
+            width: 150,
+            height: 150,
+            borderRadius: 12,
+            backgroundColor: '#f0f0f0',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: '#aaa' }}>미리보기 없음</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+
 
 
 
@@ -234,7 +275,7 @@ export default function FolderScreen() {
             style={styles.folderItem}
             onPress={() => router.push(`/folder/${folder._id}`)}
           >
-            <FolderIcon width={150} height={150} color={folder.color || '#999'} />
+            <FolderIcon width={170} height={170} color={folder.color || '#999'} />
           </TouchableOpacity>
           <View style={styles.folderLabelRow}>
             <Text style={styles.folderText}>{folder.name}</Text>
@@ -336,10 +377,8 @@ export default function FolderScreen() {
             {/* 📄 노트 목록 */}
             {notes.map((note, index) => (
               <View key={`${note.id || 'note'}-${index}`} style={styles.folderContainer}>
-                {/* 노트 아이콘 */}
-                <TouchableOpacity style={styles.folderItem} onPress={() => openEditor(note)}>
-                  <NoteIcon width={120} height={120} />
-                </TouchableOpacity>
+                {/* 🔹 PDF 첫 페이지 썸네일 */}
+                <PdfPreviewItem note={note} onPress={() => openEditor(note)} />
 
                 {/* 제목 + ▼ 버튼 */}
                 <View style={styles.folderLabelRow}>

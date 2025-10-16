@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFonts } from 'expo-font';
 import DocumentTab from '../components/DocumentTab';
 import FavoriteTab from '../components/FavoriteTab';
 import SearchTab from '../components/SearchTab';
@@ -11,68 +12,76 @@ export default function MainScreen() {
   const { tab: queryTab } = useLocalSearchParams();
   const [tab, setTab] = useState<'document' | 'favorite' | 'search' | 'ai'>('document');
 
+  const [fontsLoaded] = useFonts({
+    TitleFont: require('../assets/fonts/title.ttf'),
+  });
+  if (!fontsLoaded) return null;
+
   useEffect(() => {
-    if (
-      queryTab === 'document' ||
-      queryTab === 'favorite' ||
-      queryTab === 'search' ||
-      queryTab === 'ai'
-    ) {
+    if (['document', 'favorite', 'search', 'ai'].includes(queryTab as string)) {
       setTab(queryTab as any);
     }
   }, [queryTab]);
 
   const navigateToTab = (newTab: typeof tab) => {
     setTab(newTab);
-    router.push(`/main?tab=${newTab}`); // URL도 함께 변경
+    router.push(`/main?tab=${newTab}`);
   };
 
   const renderContent = () => {
     switch (tab) {
-      case 'document':
-        return <DocumentTab />;
-      case 'favorite':
-        return <FavoriteTab />;
-      case 'search':
-        return <SearchTab />;
-      case 'ai':
-        return <AiTab />;
-      default:
-        return null;
+      case 'document': return <DocumentTab />;
+      case 'favorite': return <FavoriteTab />;
+      case 'search': return <SearchTab />;
+      case 'ai': return <AiTab />;
+      default: return null;
     }
   };
 
   return (
     <View style={styles.container}>
+      {/* ✅ 사이드바 */}
       <View style={styles.sidebar}>
-        <Text style={styles.sidebarTitle}>📝 Note-App</Text>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../assets/images/App_Icon.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={[styles.sidebarTitle, { fontFamily: 'TitleFont' }]}>에이쁠러쓰</Text>
+        </View>
 
+        {/* 탭 버튼 */}
         <TouchableOpacity
           style={[styles.tabButton, tab === 'document' && styles.activeTab]}
           onPress={() => navigateToTab('document')}
         >
           <Text style={[styles.tabText, tab === 'document' && styles.activeText]}>문서</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.tabButton, tab === 'favorite' && styles.activeTab]}
           onPress={() => navigateToTab('favorite')}
         >
           <Text style={[styles.tabText, tab === 'favorite' && styles.activeText]}>즐겨찾기</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.tabButton, tab === 'search' && styles.activeTab]}
           onPress={() => navigateToTab('search')}
         >
           <Text style={[styles.tabText, tab === 'search' && styles.activeText]}>검색</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.tabButton, tab === 'ai' && styles.activeTab]}
           onPress={() => navigateToTab('ai')}
         >
-          <Text style={[styles.tabText, tab === 'ai' && styles.activeText]}>Ai 문제 생성</Text>
+          <Text style={[styles.tabText, tab === 'ai' && styles.activeText]}>AI 문제 생성</Text>
         </TouchableOpacity>
       </View>
 
+      {/* 본문 */}
       <View style={{ flex: 1 }}>{renderContent()}</View>
     </View>
   );
@@ -85,47 +94,63 @@ const styles = StyleSheet.create({
   },
   sidebar: {
     width: 250,
-    backgroundColor: '#f0f0f0',
-    paddingTop: 40,
-    paddingHorizontal: 8,
+    paddingTop: 60,
+    paddingHorizontal: 18,
+    backgroundColor: '#f8f8f8',
+    // ❌ 경계선 제거
+    borderRightWidth: 0,
   },
+
+
+  // 로고
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 50,
+  },
+  logo: {
+    width: 85,
+    height: 85,
+    marginBottom: 8,
+  },
+  sidebarTitle: {
+    fontSize: 30,
+    color: '#111',
+    textAlign: 'center',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+
+  // 탭 버튼
   tabButton: {
+    backgroundColor: '#fff',
     paddingVertical: 16,
-    paddingHorizontal: 12,
-    marginBottom: 12,
-    borderRadius: 6,
-    backgroundColor: '#ddd',
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
   },
   activeTab: {
-    backgroundColor: '#000',
-    opacity: 0.5,
+    backgroundColor: '#111',
+    borderColor: '#111',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
   },
   tabText: {
-    color: '#000',
+    fontSize: 17,
+    color: '#444',
     fontWeight: '600',
     textAlign: 'center',
-  },
-  content: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contentText: {
-    fontSize: 20,
-    fontWeight: 'bold',
   },
   activeText: {
     color: '#fff',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  sidebarTitle: {
-    height: 50,
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 32,
-    textAlign: 'center',
-    color: '#000',
+    fontWeight: '700',
   },
 });

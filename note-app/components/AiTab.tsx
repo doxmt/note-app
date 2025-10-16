@@ -216,7 +216,7 @@ export default function AiTab() {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: "#F9FAFB" },
+  wrapper: { flex: 1, backgroundColor: "#fff" },
   header: {
     paddingTop: 60,
     paddingBottom: 12,

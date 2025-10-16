@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
+import { Image } from 'react-native';
 import {
     View,
     Text,
@@ -11,7 +12,7 @@ import { useRouter } from 'expo-router';
 import Header from '@/components/Header';
 
 import PlusIcon from '../assets/images/square-plus-button-icon.svg';
-import FolderIcon from '../assets/images/folder.svg';
+import FolderIcon from '../assets/images/folder2.svg';
 import NoteIcon from '../assets/images/noteicon.svg';
 
 import { useFolderManager } from '../hooks/useFolderManager';
@@ -34,6 +35,47 @@ import AddOptionsModal from './Modals/AddOptionsModal';
 import FolderFormModal from './Modals/FolderFormModal';
 import FolderMoveModal from './Modals/FolderMoveModal';
 import PdfUploadModal from './Modals/PdfUploadModal';
+import PdfThumbnail from 'react-native-pdf-thumbnail';
+
+
+function PdfPreviewItem({ note, onPress }: { note: any; onPress: () => void }) {
+  const [thumbUri, setThumbUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (note.pageImageIds && note.pageImageIds.length > 0) {
+      // ✅ 서버에 저장된 첫 번째 페이지 이미지 사용
+      setThumbUri(`${BASE_URL}/api/notes/page/${note.pageImageIds[0]}`);
+    }
+  }, [note.pageImageIds]);
+
+  return (
+    <TouchableOpacity style={styles.folderItem} onPress={onPress}>
+      {thumbUri ? (
+        <Image
+          source={{ uri: thumbUri }}
+          style={{ width: 170, height: 120, borderRadius: 12 }}
+          resizeMode="cover"
+        />
+      ) : (
+        <View
+          style={{
+            width: 150,
+            height: 150,
+            borderRadius: 12,
+            backgroundColor: '#f0f0f0',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: '#aaa' }}>미리보기 없음</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+
+
 
 // ─────────────────────────────────────────────────────────────
 // UUID 간소화
@@ -204,8 +246,8 @@ export default function DocumentTab() {
                                     onPress={() => router.push(`/folder/${folder._id}`)}
                                 >
                                     <FolderIcon
-                                        width={150}
-                                        height={150}
+                                        width={170}
+                                        height={170}
                                         color={folder.color || '#999'}
                                     />
                                 </TouchableOpacity>
@@ -272,11 +314,12 @@ export default function DocumentTab() {
                         return (
                             <View key={id} style={styles.folderContainer}>
                                 <TouchableOpacity
-                                    style={styles.folderItem}
-                                    onPress={() => openEditor(note)}
+                                  style={styles.folderItem}
+                                  onPress={() => openEditor(note)}
                                 >
-                                    <NoteIcon width={120} height={120} />
+                                  <PdfPreviewItem note={note} />
                                 </TouchableOpacity>
+
 
                                 <View style={styles.folderLabelRow}>
                                     <Text style={styles.folderText}>{pickNoteName(note)}</Text>
