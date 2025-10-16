@@ -23,36 +23,20 @@ import { Note } from '@/types/note';
 import {
     useNoteManager,
     uploadNoteToServer,
-    // deleteNote,
 } from '@/hooks/useNoteManager';
-import { API_BASE } from '@/utils/api';
+import { useNoteActions } from '@/hooks/useNoteActions';
+import RenameNoteModal from '@/components/Modals/RenameNoteModal';
+import { BASE_URL } from '@/utils/api2';
 
-// 모달 (현재 파일 기준 상대경로)
+// 모달
 import AddOptionsModal from './Modals/AddOptionsModal';
 import FolderFormModal from './Modals/FolderFormModal';
 import FolderMoveModal from './Modals/FolderMoveModal';
 import PdfUploadModal from './Modals/PdfUploadModal';
 
-import { useNoteActions } from '@/hooks/useNoteActions';
-import RenameNoteModal from '@/components/Modals/RenameNoteModal';
-
-
 // ─────────────────────────────────────────────────────────────
-// UUID
-const generateUUID = async (): Promise<string> => {
-    const randomBytes = await Crypto.getRandomBytesAsync(16);
-    const hex = Array.from(randomBytes)
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-    return [
-        hex.substr(0, 8),
-        hex.substr(8, 4),
-        '4' + hex.substr(12, 3),
-        ((parseInt(hex.substr(16, 2), 16) & 0x3f) | 0x80).toString(16) +
-        hex.substr(18, 2),
-        hex.substr(20, 12),
-    ].join('-');
-};
+// UUID 간소화
+const generateUUID = (): string => Crypto.randomUUID();
 
 // note 객체에서 안전하게 id/name 추출
 const pickNoteId = (n: any): string =>
@@ -103,49 +87,32 @@ export default function DocumentTab() {
     const [nameOnly, setNameOnly] = useState(false);
 
     const [optionsVisibleNote, setOptionsVisibleNote] = useState<number | null>(null);
-    const [noteToEdit, setNoteToEdit] = useState<Note | null>(null);
-
     const [renameModalVisible, setRenameModalVisible] = useState(false);
     const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
-
-
-
-    // 폴더 이동
+    // 폴더/노트 이동
     const handleMove = async (targetId: string) => {
-      if (!movingFolderId) return;
+        if (!movingFolderId) return;
+        const isNote = rootNotes.some((n) => pickNoteId(n) === movingFolderId);
 
-      // 1️⃣ 현재 이동 대상이 note인지 folder인지 구분
-      const isNote = rootNotes.some((n) => pickNoteId(n) === movingFolderId);
+        if (isNote) {
+            await handleNoteAction('move', movingFolderId, { targetFolderId: targetId });
+        } else {
+            moveFolder(movingFolderId, targetId);
+        }
 
-      const safeTargetId = targetId === 'ROOT' || targetId === null ? null : targetId;
-
-      if (isNote) {
-        // 🧩 노트 이동
-        console.log('📦 노트 이동 실행:', movingFolderId, '→', targetId);
-        await handleNoteAction('move', movingFolderId, { targetFolderId: targetId });
-      } else {
-        // 📁 폴더 이동
-        console.log('📦 폴더 이동 실행:', movingFolderId, '→', targetId);
-        moveFolder(movingFolderId, targetId);
-      }
-
-      setMoveModalVisible(false);
-      setMovingFolderId(null);
+        setMoveModalVisible(false);
+        setMovingFolderId(null);
     };
 
-
-    // PDF 업로드 → 로컬 보관 → 메타 작성 → 서버 메타 업로드
+    // PDF 업로드
     const handlePickPdf = async () => {
-        console.log('📂 handlePickPdf 함수 시작됨');
         try {
-            const result = await DocumentPicker.getDocumentAsync({
-                type: 'application/pdf',
-            });
+            const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
             if (result.canceled || !result.assets?.length) return;
 
             const pdf = result.assets[0];
-            const noteId = await generateUUID();
+            const noteId = generateUUID();
             const folderPath = `${FileSystem.documentDirectory}notes/${noteId}.note/`;
 
             await FileSystem.makeDirectoryAsync(folderPath, { intermediates: true });
@@ -156,7 +123,7 @@ export default function DocumentTab() {
 
             const userId = await getUserId();
             if (!userId) {
-                Alert.alert('오류', '사용자 ID가 없다.');
+                Alert.alert('오류', '사용자 ID가 없습니다.');
                 return;
             }
 
@@ -174,47 +141,40 @@ export default function DocumentTab() {
                 JSON.stringify(metadata)
             );
 
-            console.log('📥 로컬 저장 완료:', metadata);
-            await uploadNoteToServer(metadata); // 메타 서버 저장
+            await uploadNoteToServer(metadata);
             reloadNotes();
         } catch (err) {
             console.error('🚨 PDF 업로드 처리 중 오류:', err);
-            Alert.alert('오류', 'PDF 업로드 중 문제가 발생했다.');
+            Alert.alert('오류', 'PDF 업로드 중 문제가 발생했습니다.');
         }
     };
 
-    // --- 1. openViewer 함수 삭제 ---
-    // 더 이상 사용하지 않으므로 관련 함수를 깨끗하게 제거했습니다.
-
-    // 편집 화면 열기
+    // PDF 편집기 열기
     const openEditor = async (note: any) => {
         const id = pickNoteId(note);
         const name = pickNoteName(note);
         if (!id) {
-            Alert.alert('오류', '노트 식별자를 찾을 수 없다.');
+            Alert.alert('오류', '노트 식별자를 찾을 수 없습니다.');
             return;
         }
 
         try {
-            const url = `${API_BASE}/api/notes/${id}/file`;
+            const url = `${BASE_URL}/api/notes/${id}/file`;
             const target = `${FileSystem.documentDirectory}${id}.editor.pdf`;
-            console.log('[DocTab] 편집용 다운로드 시작:', url, '→', target);
+            console.log('[DocTab] 편집용 다운로드 시작:', url);
 
             const { uri } = await FileSystem.downloadAsync(url, target);
             console.log('[DocTab] 편집용 다운로드 완료:', uri);
 
-            // ✅ 반드시 encodeURIComponent
             const params = {
                 pdfUri: encodeURIComponent(uri),
                 name,
                 noteId: id,
             };
-            console.log('[DocTab] push params:', params);
-
             router.push({ pathname: '/pdf-editor', params });
         } catch (e) {
             console.error('[DocTab] 편집 진입 실패:', e);
-            Alert.alert('오류', '편집기를 열지 못했다.');
+            Alert.alert('오류', '편집기를 열지 못했습니다.');
         }
     };
 
@@ -236,7 +196,7 @@ export default function DocumentTab() {
                         </View>
                     </TouchableOpacity>
 
-                    {/* 📁 상위(루트) 폴더 목록 */}
+                    {/* 📁 폴더 목록 */}
                     {folders
                         .filter((f) => f.parentId === null)
                         .map((folder, index) => (
@@ -308,76 +268,65 @@ export default function DocumentTab() {
                             </View>
                         ))}
 
-                    {/* 📄 루트 노트 목록 (PDF 아이콘 + 드롭다운) */}
+                    {/* 📄 루트 노트 목록 */}
                     {rootNotes.map((note: any, index: number) => {
-                      const id = pickNoteId(note);
-                      return (
-                        <View key={id} style={styles.folderContainer}>
-                          {/* PDF 아이콘 */}
-                          <TouchableOpacity
-                            style={styles.folderItem}
-                            onPress={() => openEditor(note)}
-                          >
-                            <NoteIcon width={120} height={120} />
-                          </TouchableOpacity>
+                        const id = pickNoteId(note);
+                        return (
+                            <View key={id} style={styles.folderContainer}>
+                                <TouchableOpacity
+                                    style={styles.folderItem}
+                                    onPress={() => openEditor(note)}
+                                >
+                                    <NoteIcon width={120} height={120} />
+                                </TouchableOpacity>
 
-                          {/* 제목 + ▼ 드롭다운 */}
-                          <View style={styles.folderLabelRow}>
-                            <Text style={styles.folderText}>{pickNoteName(note)}</Text>
-                            <TouchableOpacity
-                              onPress={() =>
-                                setOptionsVisibleNote(optionsVisibleNote === index ? null : index)
-                              }
-                            >
-                              <Text style={styles.dropdown}>▼</Text>
-                            </TouchableOpacity>
-                          </View>
+                                <View style={styles.folderLabelRow}>
+                                    <Text style={styles.folderText}>{pickNoteName(note)}</Text>
+                                    <TouchableOpacity
+                                        onPress={() =>
+                                            setOptionsVisibleNote(optionsVisibleNote === index ? null : index)
+                                        }
+                                    >
+                                        <Text style={styles.dropdown}>▼</Text>
+                                    </TouchableOpacity>
+                                </View>
 
-                          {/* 드롭다운 메뉴 */}
-                          {optionsVisibleNote === index && (
-                            <View style={styles.dropdownBox}>
-                              {/* 이름 변경 */}
-                              <TouchableOpacity
-                                onPress={() => {
-                                  const noteId = note.id || note.noteId || note._id; // 안전하게
-                                  console.log('🧩 이름 변경 클릭됨, noteId:', noteId);
-                                  setSelectedNoteId(noteId);
-                                  setRenameModalVisible(true);
-                                  setOptionsVisibleNote(null);
-                                }}
+                                {optionsVisibleNote === index && (
+                                    <View style={styles.dropdownBox}>
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                const noteId = note.id || note.noteId || note._id;
+                                                setSelectedNoteId(noteId);
+                                                setRenameModalVisible(true);
+                                                setOptionsVisibleNote(null);
+                                            }}
+                                        >
+                                            <Text style={styles.dropdownOption}>이름 변경</Text>
+                                        </TouchableOpacity>
 
-                              >
-                                <Text style={styles.dropdownOption}>이름 변경</Text>
-                              </TouchableOpacity>
+                                        <TouchableOpacity
+                                            onPress={async () => {
+                                                await handleNoteAction('delete', note.noteId);
+                                                setOptionsVisibleNote(null);
+                                            }}
+                                        >
+                                            <Text style={styles.dropdownOption}>삭제</Text>
+                                        </TouchableOpacity>
 
-
-                              {/* 삭제 */}
-                              <TouchableOpacity
-                                onPress={async () => {
-                                await handleNoteAction('delete', note.noteId);
-                                  setOptionsVisibleNote(null);
-                                }}
-                              >
-                                <Text style={styles.dropdownOption}>삭제</Text>
-                              </TouchableOpacity>
-
-                              {/* PDF 이동 */}
-                              <TouchableOpacity
-                                onPress={() => {
-                                  setMovingFolderId(note.noteId);
-                                  setMoveModalVisible(true);
-                                  setOptionsVisibleNote(null);
-                                }}
-                              >
-                                <Text style={styles.dropdownOption}>PDF 이동</Text>
-                              </TouchableOpacity>
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                setMovingFolderId(note.noteId);
+                                                setMoveModalVisible(true);
+                                                setOptionsVisibleNote(null);
+                                            }}
+                                        >
+                                            <Text style={styles.dropdownOption}>PDF 이동</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
                             </View>
-                          )}
-
-                        </View>
-                      );
+                        );
                     })}
-
                 </View>
             </ScrollView>
 
@@ -386,11 +335,8 @@ export default function DocumentTab() {
                 visible={actionModalVisible}
                 onClose={() => setActionModalVisible(false)}
                 onSelect={(action) => {
-                    if (action === '폴더 생성') {
-                        openCreateModal();
-                    } else if (action === 'PDF 업로드') {
-                        setPdfModalVisible(true);
-                    }
+                    if (action === '폴더 생성') openCreateModal();
+                    else if (action === 'PDF 업로드') setPdfModalVisible(true);
                     setActionModalVisible(false);
                 }}
             />
@@ -429,20 +375,15 @@ export default function DocumentTab() {
             />
 
             <RenameNoteModal
-              visible={renameModalVisible}
-              onClose={() => setRenameModalVisible(false)}
-              onSubmit={async (newName) => {
-                console.log('📢 RenameNoteModal onSubmit 실행됨:', newName, selectedNoteId);
-                if (selectedNoteId) {
-                  await handleNoteAction('rename', selectedNoteId, { newName });
-                } else {
-                  console.log('⚠️ selectedNoteId 없음!');
-                }
-                setRenameModalVisible(false);
-              }}
+                visible={renameModalVisible}
+                onClose={() => setRenameModalVisible(false)}
+                onSubmit={async (newName) => {
+                    if (selectedNoteId) {
+                        await handleNoteAction('rename', selectedNoteId, { newName });
+                    }
+                    setRenameModalVisible(false);
+                }}
             />
-
-
 
             <PdfUploadModal
                 visible={pdfModalVisible}
@@ -457,6 +398,7 @@ export default function DocumentTab() {
     );
 }
 
+// 스타일
 const styles = StyleSheet.create({
     wrapper: { flex: 1, backgroundColor: '#fff' },
     header: {
