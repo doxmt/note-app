@@ -1,10 +1,13 @@
 import { View } from 'react-native';
 import SectionHeader from '../components/common/SectionHeader';
+import Header from '@/components/Header';
+
 
 export default function DocumentTab() {
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <SectionHeader title="즐겨찾기" />
+    <Header title="즐겨 찾기" showLogout />
+
       {/* 나머지 내용 */}
     </View>
   );

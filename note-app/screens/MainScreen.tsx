@@ -69,7 +69,7 @@ export default function MainScreen() {
           style={[styles.tabButton, tab === 'ai' && styles.activeTab]}
           onPress={() => navigateToTab('ai')}
         >
-          <Text style={[styles.tabText, tab === 'ai' && styles.activeText]}>Ai 기능</Text>
+          <Text style={[styles.tabText, tab === 'ai' && styles.activeText]}>Ai 문제 생성</Text>
         </TouchableOpacity>
       </View>
 

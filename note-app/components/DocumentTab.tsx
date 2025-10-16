@@ -8,6 +8,7 @@ import {
     Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import Header from '@/components/Header';
 
 import PlusIcon from '../assets/images/square-plus-button-icon.svg';
 import FolderIcon from '../assets/images/folder.svg';
@@ -179,14 +180,11 @@ export default function DocumentTab() {
     };
 
     return (
-        <View style={styles.wrapper}>
-            <View style={styles.header}>
-                <Text style={styles.headerText}>문서</Text>
-            </View>
-
+         <View style={styles.wrapper}>
+            <Header title="문서" showLogout />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.folderRow}>
-                    {/* ➕ 추가 버튼 */}
+
                     <TouchableOpacity
                         style={styles.folderContainer}
                         onPress={() => setActionModalVisible(true)}
@@ -401,13 +399,7 @@ export default function DocumentTab() {
 // 스타일
 const styles = StyleSheet.create({
     wrapper: { flex: 1, backgroundColor: '#fff' },
-    header: {
-        paddingTop: 60,
-        paddingBottom: 16,
-        paddingHorizontal: 20,
-        backgroundColor: '#f0f0f0',
-    },
-    headerText: { fontSize: 26, fontWeight: 'bold', color: '#000' },
+
     scrollContent: { padding: 16 },
     folderRow: {
         flexDirection: 'row',

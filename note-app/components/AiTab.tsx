@@ -1,5 +1,6 @@
 // note-app/components/AiTab.tsx
 import React, { useState } from "react";
+import Header from '@/components/Header';
 import {
   View,
   Text,
@@ -144,10 +145,7 @@ export default function AiTab() {
 
   return (
     <View style={styles.wrapper}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>AI 기능</Text>
-      </View>
+      <Header title="AI 문제 생성" showLogout />
 
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.guideTitle}>📘 PDF를 업로드하고 문제를 풀어보세요!</Text>
