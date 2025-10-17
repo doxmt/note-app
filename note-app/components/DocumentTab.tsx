@@ -441,7 +441,7 @@ export default function DocumentTab() {
 
 // 스타일
 const styles = StyleSheet.create({
-    wrapper: { flex: 1, backgroundColor: 'rgba(255,255,255,0)' },
+    wrapper: { flex: 1, backgroundColor: '#fff' },
 
     scrollContent: { padding: 16 },
     folderRow: {

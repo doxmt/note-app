@@ -8,6 +8,7 @@ import DocumentTab from '../components/DocumentTab';
 import FavoriteTab from '../components/FavoriteTab';
 import SearchTab from '../components/SearchTab';
 import AiTab from '../components/AiTab';
+import Sidebar from '@/components/Sidebar';
 
 export default function MainScreen() {
   const router = useRouter();
@@ -42,53 +43,8 @@ export default function MainScreen() {
 
   return (
     <View style={styles.container}>
-      {/* 🌈 사이드바에만 그라디언트 */}
-      <LinearGradient
-        colors={['#a8edea', '#fed6e3']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={styles.sidebar}
-      >
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('../assets/images/App_Icon.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={[styles.sidebarTitle, { fontFamily: 'TitleFont' }]}>에이쁠러쓰</Text>
-        </View>
+      <Sidebar activeTab={tab} onSelectTab={setTab} />
 
-        {/* 탭 버튼 */}
-        <TouchableOpacity
-          style={[styles.tabButton, tab === 'document' && styles.activeTab]}
-          onPress={() => navigateToTab('document')}
-        >
-          <Text style={[styles.tabText, tab === 'document' && styles.activeText]}>문서</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabButton, tab === 'favorite' && styles.activeTab]}
-          onPress={() => navigateToTab('favorite')}
-        >
-          <Text style={[styles.tabText, tab === 'favorite' && styles.activeText]}>즐겨찾기</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabButton, tab === 'search' && styles.activeTab]}
-          onPress={() => navigateToTab('search')}
-        >
-          <Text style={[styles.tabText, tab === 'search' && styles.activeText]}>검색</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabButton, tab === 'ai' && styles.activeTab]}
-          onPress={() => navigateToTab('ai')}
-        >
-          <Text style={[styles.tabText, tab === 'ai' && styles.activeText]}>AI 문제 생성</Text>
-        </TouchableOpacity>
-      </LinearGradient>
-
-      {/* 📄 본문 */}
       <View style={styles.content}>{renderContent()}</View>
     </View>
   );
@@ -164,8 +120,8 @@ const styles = StyleSheet.create({
   },
 
   content: {
-
+    flex: 1,
     backgroundColor: '#fff',
-    padding: 10,
+
   },
 });

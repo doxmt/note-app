@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-
+import Sidebar from '@/components/Sidebar';
 import { Image } from 'react-native';
 import {
   View,
@@ -28,6 +28,7 @@ import { API_BASE, BASE_URL } from '@/utils/api';
 import { useNoteActions } from '@/hooks/useNoteActions';
 import RenameNoteModal from '@/components/Modals/RenameNoteModal';
 import PdfThumbnail from 'react-native-pdf-thumbnail';
+import { useFonts } from 'expo-font';
 
 function PdfPreviewItem({ note, onPress }: { note: any; onPress: () => void }) {
   const [thumbUri, setThumbUri] = useState<string | null>(null);
@@ -81,7 +82,10 @@ export default function FolderScreen() {
   const [movingFolderId, setMovingFolderId] = useState<string | null>(null);
   const [pdfModalVisible, setPdfModalVisible] = useState(false);
   const { notes, reloadNotes } = useNoteManager(currentFolderId);
-
+    const [fontsLoaded] = useFonts({
+          TitleFont: require('@/assets/fonts/title.ttf'), // ✅ 경로 확인 필요
+        });
+        if (!fontsLoaded) return null;
 
   const [optionsVisibleNote, setOptionsVisibleNote] = useState<number | null>(null);
   const [noteToEdit, setNoteToEdit] = useState<Note | null>(null);
@@ -227,26 +231,26 @@ export default function FolderScreen() {
 
 
   const handlePickPdf = async () => {
-    console.log('📂 handlePickPdf 함수 시작됨'); 
+    console.log('📂 handlePickPdf 함수 시작됨');
     try {
       const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
       if (result.canceled || !result.assets?.length) return;
-  
+
       const pdf = result.assets[0];
       const noteId = await generateUUID();
       const folderPath = `${FileSystem.documentDirectory}notes/${noteId}.note/`;
-  
+
       await FileSystem.makeDirectoryAsync(folderPath, { intermediates: true });
-  
+
       const pdfTargetPath = `${folderPath}${pdf.name}`;
       await FileSystem.copyAsync({ from: pdf.uri, to: pdfTargetPath });
-  
+
       const userId = await getUserId();
       if (!userId) {
         console.warn('❗ userId 없음');
         return;
       }
-  
+
       const metadata: Note = {
         id: noteId,
         name: pdf.name.replace(/\.pdf$/, ''),
@@ -255,9 +259,9 @@ export default function FolderScreen() {
         folderId: currentFolderId,
         userId,
       };
-  
+
       await FileSystem.writeAsStringAsync(`${folderPath}metadata.json`, JSON.stringify(metadata));
-  
+
       console.log('📥 로컬 저장 완료:', metadata);
       await uploadNoteToServer(metadata);
     } catch (err) {
@@ -265,7 +269,7 @@ export default function FolderScreen() {
     }
   };
 
-  
+
   const renderChildFolders = () => {
     return folders
       .filter(folder => folder.parentId === currentFolderId)
@@ -325,19 +329,8 @@ export default function FolderScreen() {
   return (
     <View style={styles.container}>
       {/* 사이드바 */}
-      <View style={styles.sidebar}>
-        <Text style={styles.sidebarTitle}>📝 Note-App</Text>
-        {['문서', '즐겨찾기', '검색', 'Ai 기능'].map(tab => (
-          <TouchableOpacity
-            key={tab}
-            onPress={() => router.push(`/main?tab=${tab}`)}
-            style={styles.tabButton}
-          >
-            <Text style={styles.tabText}>{tab}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-  
+       <Sidebar navigateMode />
+
       {/* 메인 컨텐츠 */}
       <View style={styles.wrapper}>
         {/* 헤더 */}
@@ -352,12 +345,12 @@ export default function FolderScreen() {
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <View style={styles.titleWrapper}>
-            <Text style={styles.headerText}>
+            <Text style={[styles.headerText, { fontFamily: 'TitleFont' }]}>
               📁 {buildBreadcrumbString(currentFolderId)}
             </Text>
           </View>
         </View>
-  
+
         {/* 폴더 + 노트 목록 */}
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.folderRow}>
@@ -370,10 +363,10 @@ export default function FolderScreen() {
                 <PlusIcon width={150} height={150} />
               </View>
             </TouchableOpacity>
-  
+
             {/* 📁 하위 폴더 목록 */}
             {renderChildFolders()}
-  
+
             {/* 📄 노트 목록 */}
             {notes.map((note, index) => (
               <View key={`${note.id || 'note'}-${index}`} style={styles.folderContainer}>
@@ -436,7 +429,7 @@ export default function FolderScreen() {
           </View>
         </ScrollView>
       </View>
-  
+
       {/* 모달들 */}
       <AddOptionsModal
         visible={actionModalVisible}
@@ -474,7 +467,7 @@ export default function FolderScreen() {
 
 
 
-  
+
       <FolderMoveModal
             visible={moveModalVisible}
             folders={folders}
@@ -484,7 +477,7 @@ export default function FolderScreen() {
               setMovingFolderId(null);
             }}
           />
-  
+
       <PdfUploadModal
         visible={pdfModalVisible}
         onClose={() => setPdfModalVisible(false)}
@@ -530,13 +523,24 @@ const styles = StyleSheet.create({
   tabText: { color: '#000', fontWeight: '600', textAlign: 'center' },
   wrapper: { flex: 1, backgroundColor: '#fff' },
   header: {
-    alignItems: 'center', flexDirection: 'row', height: 60,
-    backgroundColor: '#f0f0f0', justifyContent: 'center',
-    paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#ccc',
+    paddingTop: 20,
+    paddingBottom: 25, // ⬆️ 기존 5 → 15로 늘리기 (여백 확보)
+       paddingHorizontal: 20,
+       flexDirection: 'row',
+       alignItems: 'center',
+       justifyContent: 'center',
+       backgroundColor: 'rgba(255,255,255,0.6)',
+       borderBottomWidth: 0.5,
+       borderBottomColor: 'rgba(0,0,0,0.1)',
+       position: 'relative',
   },
   backText: { fontSize: 22, fontWeight: 'bold', marginRight: 12 },
   titleWrapper: { flex: 1, alignItems: 'center' },
-  headerText: { fontSize: 20, fontWeight: 'bold', color: '#000' },
+  headerText: { fontSize: 34,
+                  fontWeight: '800',
+                  color: '#222',
+                  letterSpacing: 0.6,
+                  marginTop: -8, },
   scrollContent: { padding: 16 },
   folderRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 33 },
   folderContainer: { width: 150, alignItems: 'center', marginBottom: 24 },

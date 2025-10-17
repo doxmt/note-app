@@ -67,7 +67,6 @@ export default function FolderFormModal({
       }
     }
 
-    onClose(); // ✅ 색상 선택 후 항상 닫기
   };
 
 
