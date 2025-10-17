@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
        borderBottomColor: 'rgba(0,0,0,0.1)',
        position: 'relative',
   },
-  backText: { fontSize: 22, fontWeight: 'bold', marginRight: 12 },
+  backText: { fontSize: 22, fontWeight: 'bold', marginRight: 12,color: '#000',  },
   titleWrapper: { flex: 1, alignItems: 'center' },
   headerText: { fontSize: 34,
                   fontWeight: '800',

@@ -40,8 +40,8 @@ export default function Sidebar({ activeTab = 'document', onSelectTab, navigateM
       {[
         { key: 'document', label: '문서' },
         { key: 'favorite', label: '즐겨찾기' },
-        { key: 'search', label: '검색' },
-        { key: 'ai', label: 'AI 문제 생성' },
+        { key: 'search', label: 'PDF 요약' },
+        { key: 'ai', label: '퀴즈 생성' },
       ].map(({ key, label }) => (
         <TouchableOpacity
           key={key}

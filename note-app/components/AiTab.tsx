@@ -145,7 +145,7 @@ export default function AiTab() {
 
   return (
     <View style={styles.wrapper}>
-      <Header title="AI 문제 생성" showLogout />
+      <Header title="퀴즈 생성" showLogout />
 
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.guideTitle}>📘 PDF를 업로드하고 문제를 풀어보세요!</Text>
