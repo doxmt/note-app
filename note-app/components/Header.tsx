@@ -37,7 +37,7 @@ export default function Header({ title, showLogout = false }: HeaderProps) {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#f8f8f8', // ✅ 사이드바와 동일 톤으로 통일
+    backgroundColor: '#fafafa',
     paddingTop: 55,
     paddingBottom: 18,
     paddingHorizontal: 24,
@@ -45,10 +45,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
 
-    // ✅ 경계선 및 그림자 제거
-    borderBottomWidth: 0,
-    shadowOpacity: 0,
-    elevation: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
+
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   title: {
     fontSize: 24,
@@ -61,6 +64,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 10,
+
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   logoutText: {
     color: '#fff',

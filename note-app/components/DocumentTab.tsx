@@ -28,7 +28,7 @@ import {
 } from '@/hooks/useNoteManager';
 import { useNoteActions } from '@/hooks/useNoteActions';
 import RenameNoteModal from '@/components/Modals/RenameNoteModal';
-import { BASE_URL } from '@/utils/api2';
+import { BASE_URL } from '@/utils/api';
 
 // 모달
 import AddOptionsModal from './Modals/AddOptionsModal';
@@ -441,7 +441,7 @@ export default function DocumentTab() {
 
 // 스타일
 const styles = StyleSheet.create({
-    wrapper: { flex: 1, backgroundColor: '#fff' },
+    wrapper: { flex: 1, backgroundColor: 'rgba(255,255,255,0)' },
 
     scrollContent: { padding: 16 },
     folderRow: {

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useFonts } from 'expo-font';
+import { LinearGradient } from 'expo-linear-gradient';
+
 import DocumentTab from '../components/DocumentTab';
 import FavoriteTab from '../components/FavoriteTab';
 import SearchTab from '../components/SearchTab';
@@ -40,8 +42,13 @@ export default function MainScreen() {
 
   return (
     <View style={styles.container}>
-      {/* ✅ 사이드바 */}
-      <View style={styles.sidebar}>
+      {/* 🌈 사이드바에만 그라디언트 */}
+      <LinearGradient
+        colors={['#a8edea', '#fed6e3']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.sidebar}
+      >
         <View style={styles.logoContainer}>
           <Image
             source={require('../assets/images/App_Icon.png')}
@@ -79,30 +86,33 @@ export default function MainScreen() {
         >
           <Text style={[styles.tabText, tab === 'ai' && styles.activeText]}>AI 문제 생성</Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
 
-      {/* 본문 */}
-      <View style={{ flex: 1 }}>{renderContent()}</View>
+      {/* 📄 본문 */}
+      <View style={styles.content}>{renderContent()}</View>
     </View>
   );
 }
 
+// ────────────────────────────────
+// 🎨 스타일
+// ────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'row',
   },
+
   sidebar: {
     width: 250,
     paddingTop: 60,
     paddingHorizontal: 18,
-    backgroundColor: '#f8f8f8',
-    // ❌ 경계선 제거
     borderRightWidth: 0,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
 
-
-  // 로고
   logoContainer: {
     alignItems: 'center',
     marginBottom: 50,
@@ -120,9 +130,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // 탭 버튼
   tabButton: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.8)',
     paddingVertical: 16,
     paddingHorizontal: 18,
     borderRadius: 14,
@@ -137,8 +146,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   activeTab: {
-    backgroundColor: '#111',
-    borderColor: '#111',
+    backgroundColor: '#ff6b6b',
+    borderColor: '#ff6b6b',
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 6,
@@ -152,5 +161,11 @@ const styles = StyleSheet.create({
   activeText: {
     color: '#fff',
     fontWeight: '700',
+  },
+
+  content: {
+
+    backgroundColor: '#fff',
+    padding: 10,
   },
 });

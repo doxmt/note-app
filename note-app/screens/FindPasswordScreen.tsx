@@ -1,11 +1,20 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+// app/findpassword.tsx
+
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { API_BASE } from '../utils/api';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts } from 'expo-font';
 
 export default function FindpasswordScreen() {
   const [email, setEmail] = useState('');
   const router = useRouter();
+
+  const [fontsLoaded] = useFonts({
+    TitleFont: require('../assets/fonts/title.ttf'),
+  });
+  if (!fontsLoaded) return null;
 
   const handleSendResetLink = async () => {
     if (!email) {
@@ -24,7 +33,7 @@ export default function FindpasswordScreen() {
 
       if (res.ok) {
         Alert.alert('이메일 발송 완료', '비밀번호 재설정 링크가 이메일로 전송되었습니다.');
-        router.back(); // 메인으로 돌아가기
+        router.back();
       } else {
         Alert.alert('오류', data.message || '문제가 발생했습니다.');
       }
@@ -35,74 +44,110 @@ export default function FindpasswordScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-        <Text style={styles.backButtonText}>←</Text>
-      </TouchableOpacity>
+    <LinearGradient colors={['#a8edea', '#fed6e3']} style={styles.container}>
+      <View style={styles.card}>
+        {/* 로고 + 제목 */}
+        <View style={styles.titleContainer}>
+          <Image
+            source={require('../assets/images/App_Icon.png')}
+            style={styles.icon}
+            resizeMode="contain"
+          />
+          <Text style={[styles.title, { fontFamily: 'TitleFont' }]}>에이쁠러쓰</Text>
+          <Text style={styles.subtitle}>비밀번호 재설정</Text>
+        </View>
 
-      <Text style={styles.title}>비밀번호 재설정</Text>
+        {/* 이메일 입력 */}
+        <TextInput
+          style={styles.input}
+          placeholder="이메일 주소"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          placeholderTextColor="#aaa"
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="이메일 주소"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+        {/* 버튼 */}
+        <TouchableOpacity style={styles.resetBtn} onPress={handleSendResetLink}>
+          <Text style={styles.resetText}>링크 보내기</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleSendResetLink}>
-        <Text style={styles.buttonText}>링크 보내기</Text>
-      </TouchableOpacity>
-    </View>
+        {/* 뒤로가기 */}
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backText}>← 로그인으로 돌아가기</Text>
+        </TouchableOpacity>
+      </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
-    backgroundColor: '#fff',
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  backButton: {
-    position: 'absolute',
-    top: 48,
-    left: 24,
-    zIndex: 10,
+  card: {
+    backgroundColor: '#fff',
+    width: 400,
+    borderRadius: 16,
+    paddingVertical: 40,
+    paddingHorizontal: 30,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
   },
-  backButtonText: {
-    fontSize: 28,
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  icon: {
+    width: 90,
+    height: 90,
+    marginBottom: 10,
   },
   title: {
-    width: '70%',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    textAlign: 'center',
-    alignSelf: 'center',
+    fontSize: 40,
+    color: '#333',
+  },
+  subtitle: {
+    marginTop: 6,
+    fontSize: 18,
+    color: '#666',
   },
   input: {
-    width: '70%',
-    height: 48,
-    borderColor: '#ccc',
+    width: '100%',
+    height: 50,
+    borderColor: '#ddd',
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: 10,
     marginBottom: 16,
-    alignSelf: 'center',
-  },
-  button: {
-    width: '70%',
-    backgroundColor: '#000',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    alignSelf: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+    paddingHorizontal: 16,
+    backgroundColor: '#fafafa',
     fontSize: 16,
+    color: '#333',
+  },
+  resetBtn: {
+    backgroundColor: '#ff6b6b',
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  resetText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  backButton: {
+    marginTop: 20,
+  },
+  backText: {
+    color: '#666',
+    textDecorationLine: 'underline',
   },
 });
