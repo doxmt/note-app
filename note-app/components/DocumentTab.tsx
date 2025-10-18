@@ -38,18 +38,17 @@ import PdfUploadModal from './Modals/PdfUploadModal';
 import PdfThumbnail from 'react-native-pdf-thumbnail';
 
 
-function PdfPreviewItem({ note, onPress }: { note: any; onPress: () => void }) {
+function PdfPreviewItem({ note }: { note: any }) {
   const [thumbUri, setThumbUri] = useState<string | null>(null);
 
   useEffect(() => {
     if (note.pageImageIds && note.pageImageIds.length > 0) {
-      // ✅ 서버에 저장된 첫 번째 페이지 이미지 사용
       setThumbUri(`${BASE_URL}/api/notes/page/${note.pageImageIds[0]}`);
     }
   }, [note.pageImageIds]);
 
   return (
-    <TouchableOpacity style={styles.folderItem} onPress={onPress}>
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
       {thumbUri ? (
         <Image
           source={{ uri: thumbUri }}
@@ -70,9 +69,10 @@ function PdfPreviewItem({ note, onPress }: { note: any; onPress: () => void }) {
           <Text style={{ color: '#aaa' }}>미리보기 없음</Text>
         </View>
       )}
-    </TouchableOpacity>
+    </View>
   );
 }
+
 
 
 
@@ -88,10 +88,12 @@ const pickNoteId = (n: any): string =>
 const pickNoteName = (n: any): string =>
     String(n?.name ?? n?.fileName ?? '제목 없음');
 
+
 // ─────────────────────────────────────────────────────────────
 
 export default function DocumentTab() {
     const router = useRouter();
+
 
     // 폴더 훅
     const {
@@ -194,6 +196,7 @@ export default function DocumentTab() {
 
     // PDF 편집기 열기
     const openEditor = async (note: any) => {
+        console.log("🟢 openEditor 호출됨:", note);
         const id = pickNoteId(note);
         const name = pickNoteName(note);
         if (!id) {

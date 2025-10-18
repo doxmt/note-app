@@ -1,3 +1,7 @@
+/**
+ * 📘 routes/note.js — 통합 완성형
+ * 기능: 업로드, 변환, 페이지 이미지, 스트리밍, 필기 저장, 메타 수정, 삭제
+ */
 const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -9,38 +13,32 @@ const { fromPath } = require("pdf2pic");
 const Note = require('../models/Note');
 
 const router = express.Router();
-
-// ─────────────────────────────────────────────
-// 📦 Multer (메모리 스토리지)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// ─────────────────────────────────────────────
-// 유틸
+// ───────────────────────────────
+// 📎 유틸
 function normalizeFolderId(v) {
   return (v === undefined || v === null || v === '' || v === 'null' || v === 'undefined')
     ? null
     : v;
 }
-
 function parseCreatedAt(v) {
   const d = new Date(v);
   return isNaN(d.getTime()) ? new Date() : d;
 }
 
-// ─────────────────────────────────────────────
-// ✨ PDF → 이미지 변환 및 업로드
+// ───────────────────────────────
+// 🖼️ PDF → 이미지 변환 후 GridFS 업로드
 async function convertAndUploadPages(pdfBuffer, noteId, db) {
   const pageImageIds = [];
   const imageBucket = new GridFSBucket(db, { bucketName: 'pageImages' });
 
-  // 1️⃣ 임시 경로 생성
   const tempDir = path.join(__dirname, '..', 'uploads', 'temp_pdfs');
   if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
   const tempPdfPath = path.join(tempDir, `${noteId}.pdf`);
   fs.writeFileSync(tempPdfPath, pdfBuffer);
 
-  // 2️⃣ pdf2pic 옵션
   const options = {
     density: 150,
     saveFilename: "page",
@@ -51,14 +49,11 @@ async function convertAndUploadPages(pdfBuffer, noteId, db) {
   };
   if (!fs.existsSync(options.savePath)) fs.mkdirSync(options.savePath, { recursive: true });
 
-  // 3️⃣ 변환 실행
   const convert = fromPath(tempPdfPath, options);
   const pages = await convert.bulk(-1, { responseType: "image" });
 
-  // 4️⃣ 변환된 이미지를 GridFS에 업로드
-  for (const page of pages) {
-    const imageName = path.basename(page.path);
-    const uploadStream = imageBucket.openUploadStream(imageName, {
+  for (const [i, page] of pages.entries()) {
+    const uploadStream = imageBucket.openUploadStream(`page-${i}.png`, {
       contentType: 'image/png',
       metadata: { noteId },
     });
@@ -66,19 +61,19 @@ async function convertAndUploadPages(pdfBuffer, noteId, db) {
     const fileBuffer = fs.readFileSync(page.path);
     uploadStream.end(fileBuffer);
     await once(uploadStream, 'finish');
+
     pageImageIds.push(uploadStream.id);
     fs.unlinkSync(page.path);
   }
 
-  // 5️⃣ 정리
   fs.unlinkSync(tempPdfPath);
   fs.rmSync(options.savePath, { recursive: true, force: true });
 
   return pageImageIds;
 }
 
-// ─────────────────────────────────────────────
-// 1) 노트 목록 조회
+// ───────────────────────────────
+// 1️⃣ 노트 목록 조회
 router.get('/', async (req, res) => {
   try {
     const { userId, folderId } = req.query;
@@ -88,44 +83,37 @@ router.get('/', async (req, res) => {
       userId,
       folderId: normalizeFolderId(folderId),
     };
-
     const notes = await Note.find(filter).sort({ createdAt: -1 });
-    return res.json({ notes });
+    res.json({ notes });
   } catch (err) {
     console.error('❌ 노트 목록 조회 오류:', err);
-    return res.status(500).json({ error: '서버 오류' });
+    res.status(500).json({ error: '서버 오류' });
   }
 });
 
-// ─────────────────────────────────────────────
-// 2) 노트 + PDF 업로드 (+ 이미지 변환)
+// ───────────────────────────────
+// 2️⃣ PDF 업로드 + 이미지 변환 + DB저장
 router.post('/upload', upload.single('file'), async (req, res) => {
   try {
     const { userId, noteId, name, createdAt, folderId } = req.body;
-    if (!userId || !noteId || !name || !createdAt || !req.file) {
+    if (!userId || !noteId || !name || !createdAt || !req.file)
       return res.status(400).json({ error: '필수 항목 또는 파일 누락' });
-    }
 
     const db = mongoose.connection.db;
-    if (!db) return res.status(500).json({ error: 'DB 연결 미확립' });
-
-    // 1️⃣ PDF GridFS 업로드
     const pdfBucket = new GridFSBucket(db, { bucketName: 'pdfs' });
+
     const originalName = req.file.originalname || `${noteId}.pdf`;
     const mime = req.file.mimetype || 'application/pdf';
-
     const pdfUploadStream = pdfBucket.openUploadStream(originalName, { contentType: mime });
     pdfUploadStream.end(req.file.buffer);
     await once(pdfUploadStream, 'finish');
     const pdfFileId = pdfUploadStream.id;
 
-    // 2️⃣ PDF → 이미지 변환
     console.log('🖼️ PDF → 이미지 변환 시작...');
     const pageImageIds = await convertAndUploadPages(req.file.buffer, noteId, db);
     console.log('✅ 이미지 업로드 완료:', pageImageIds.length, '개');
 
-    // 3️⃣ 메타데이터 저장
-    const doc = new Note({
+    const note = new Note({
       userId,
       noteId,
       name,
@@ -135,18 +123,19 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       fileName: originalName,
       mimeType: mime,
       pageImageIds,
+      annotations: [], // 기본 빈 배열
     });
 
-    await doc.save();
-    return res.status(201).json({ message: '업로드 및 변환 성공', note: doc });
+    await note.save();
+    res.status(201).json({ message: '업로드 및 변환 성공', note });
   } catch (err) {
     console.error('🚨 업로드 처리 오류:', err);
-    return res.status(500).json({ error: '서버 오류' });
+    res.status(500).json({ error: '서버 오류' });
   }
 });
 
-// ─────────────────────────────────────────────
-// 3) PDF 파일 스트리밍
+// ───────────────────────────────
+// 3️⃣ PDF 다운로드 스트리밍
 router.get('/:noteId/file', async (req, res) => {
   try {
     const { noteId } = req.params;
@@ -156,103 +145,103 @@ router.get('/:noteId/file', async (req, res) => {
 
     const bucket = new GridFSBucket(db, { bucketName: 'pdfs' });
     res.set('Content-Type', note.mimeType || 'application/pdf');
-    bucket.openDownloadStream(note.fileId)
-      .on('error', (e) => {
-        console.error('❌ PDF 스트리밍 오류:', e);
-        res.status(404).end();
-      })
-      .pipe(res);
+    bucket.openDownloadStream(note.fileId).on('error', () => res.status(404).end()).pipe(res);
   } catch (err) {
     console.error('🚨 PDF 다운로드 오류:', err);
     res.status(500).json({ error: '서버 오류' });
   }
 });
 
-// ─────────────────────────────────────────────
-// 4) 페이지 이미지 ID 목록 조회
-router.get('/:noteId/pages', async (req, res) => {
-  try {
-    const { noteId } = req.params;
-    const note = await Note.findOne({ noteId });
-    if (!note || !note.pageImageIds) {
-      return res.status(404).json({ error: '페이지 없음' });
-    }
-    res.json(note.pageImageIds);
-  } catch (err) {
-    res.status(500).json({ error: '페이지 ID 조회 오류' });
-  }
-});
-
-// ─────────────────────────────────────────────
-// 5) 특정 이미지 스트리밍
+// ───────────────────────────────
+// 4️⃣ 페이지 이미지 스트리밍
 router.get('/page/:fileId', async (req, res) => {
   try {
     const { fileId } = req.params;
     const db = mongoose.connection.db;
     const bucket = new GridFSBucket(db, { bucketName: 'pageImages' });
     res.set('Content-Type', 'image/png');
-    bucket.openDownloadStream(new ObjectId(fileId))
-      .on('error', () => res.status(404).end())
-      .pipe(res);
+    bucket.openDownloadStream(new ObjectId(fileId)).on('error', () => res.status(404).end()).pipe(res);
   } catch {
     res.status(400).json({ error: '잘못된 파일 ID' });
   }
 });
 
-// ─────────────────────────────────────────────
-// 6) 필기 저장
+// ───────────────────────────────
+// 5️⃣ 페이지 이미지 ID 목록 조회
+router.get('/:noteId/pages', async (req, res) => {
+  try {
+    const { noteId } = req.params;
+    const note = await Note.findOne({ noteId });
+    if (!note || !note.pageImageIds)
+      return res.status(404).json([]);
+
+    // 단순 배열만 리턴
+    res.json(note.pageImageIds);
+  } catch (err) {
+    res.status(500).json({ error: '페이지 목록 오류' });
+  }
+});
+
+
+// ───────────────────────────────
+// 6️⃣ 페이지별 필기 저장 (pageIndex 포함 구조)
 router.put('/:noteId/strokes', async (req, res) => {
   try {
     const { noteId } = req.params;
-    const strokesData = req.body;
-    const updatedNote = await Note.findOneAndUpdate(
-      { noteId },
-      { $set: { annotations: strokesData } },
-      { new: true }
-    );
-    if (!updatedNote) return res.status(404).json({ error: '해당 노트 없음' });
-    res.status(200).json({ message: '필기 저장 성공' });
+    const strokesData = req.body; // [{ pageIndex, strokes: [...] }]
+    if (!Array.isArray(strokesData))
+      return res.status(400).json({ error: '잘못된 데이터 형식' });
+
+    const note = await Note.findOne({ noteId });
+    if (!note) return res.status(404).json({ error: '노트 없음' });
+
+    note.annotations = strokesData;
+    await note.save();
+
+    res.status(200).json({ message: '필기 저장 완료' });
   } catch (err) {
+    console.error('🚨 필기 저장 오류:', err);
     res.status(500).json({ error: '서버 오류' });
   }
 });
 
-// ─────────────────────────────────────────────
-// 7) 필기 불러오기
+// ───────────────────────────────
+// 7️⃣ 필기 불러오기
 router.get('/:noteId/strokes', async (req, res) => {
   try {
-    const { noteId } = req.params;
-    const note = await Note.findOne({ noteId });
-    if (!note) return res.status(404).json({ message: '해당 노트 없음' });
+    const note = await Note.findOne({ noteId: req.params.noteId });
+    if (!note) return res.status(404).json({ message: '노트 없음' });
     res.status(200).json(note.annotations || []);
   } catch (err) {
     res.status(500).json({ error: '서버 오류' });
   }
 });
 
-// ─────────────────────────────────────────────
-// 8) 노트 메타 수정 (이름 변경, 폴더 이동 등)
+// ───────────────────────────────
+// 8️⃣ 노트 메타데이터 수정
 router.put('/:noteId', async (req, res) => {
   try {
-    const { noteId } = req.params;
     const { name, folderId } = req.body;
     const updateFields = {};
     if (name !== undefined) updateFields.name = name;
     if (folderId !== undefined) updateFields.folderId = normalizeFolderId(folderId);
 
-    const result = await Note.findOneAndUpdate({ noteId }, { $set: updateFields }, { new: true });
-    if (!result) return res.status(404).json({ error: 'noteId 없음' });
+    const updated = await Note.findOneAndUpdate(
+      { noteId: req.params.noteId },
+      { $set: updateFields },
+      { new: true }
+    );
 
-    console.log(`📝 노트 업데이트 성공: ${noteId} → ${JSON.stringify(updateFields)}`);
-    res.json({ message: '노트 업데이트 성공', note: result });
+    if (!updated) return res.status(404).json({ error: 'noteId 없음' });
+    res.json({ message: '노트 업데이트 성공', note: updated });
   } catch (err) {
     console.error('🚨 노트 업데이트 실패:', err);
     res.status(500).json({ error: '서버 오류' });
   }
 });
 
-// ─────────────────────────────────────────────
-// 9) 노트 삭제
+// ───────────────────────────────
+// 9️⃣ 노트 삭제
 router.delete('/:noteId', async (req, res) => {
   try {
     const { noteId } = req.params;
@@ -264,13 +253,11 @@ router.delete('/:noteId', async (req, res) => {
     const imageBucket = new GridFSBucket(db, { bucketName: 'pageImages' });
 
     if (note.fileId) {
-      try { await pdfBucket.delete(new ObjectId(note.fileId)); }
-      catch (e) { console.warn('⚠️ PDF 삭제 실패:', e.message); }
+      try { await pdfBucket.delete(new ObjectId(note.fileId)); } catch (e) { console.warn('⚠️ PDF 삭제 실패:', e.message); }
     }
     if (note.pageImageIds?.length) {
-      for (const imgId of note.pageImageIds) {
-        try { await imageBucket.delete(new ObjectId(imgId)); }
-        catch { /* 무시 */ }
+      for (const id of note.pageImageIds) {
+        try { await imageBucket.delete(new ObjectId(id)); } catch { }
       }
     }
 
