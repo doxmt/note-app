@@ -4,7 +4,6 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } fro
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { API_BASE } from '../utils/api';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
 
 export default function SignUpScreen() {
@@ -104,7 +103,7 @@ export default function SignUpScreen() {
   }, [email]);
 
   return (
-    <LinearGradient colors={['#a8edea', '#fed6e3']} style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.card}>
         {/* 제목 */}
         <View style={styles.titleContainer}>
@@ -165,7 +164,7 @@ export default function SignUpScreen() {
           <Text style={styles.backText}>← 로그인으로 돌아가기</Text>
         </TouchableOpacity>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -174,6 +173,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f3f0fa', // 💜 LinearGradient 대신 단색 배경
   },
   card: {
     backgroundColor: '#fff',

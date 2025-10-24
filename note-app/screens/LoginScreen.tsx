@@ -1,12 +1,9 @@
-// app/login.tsx
-
 import { API_BASE } from '@/utils/api';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { saveUserId } from '../utils/auth';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -41,7 +38,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={['#a8edea', '#fed6e3']} style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.card}>
         {/* 로고 + 제목 */}
         <View style={styles.titleContainer}>
@@ -50,7 +47,6 @@ export default function LoginScreen() {
             style={styles.icon}
             resizeMode="contain"
           />
-          {/* ✅ 타이틀만 변경 */}
           <Text style={[styles.title, { fontFamily: 'TitleFont' }]}>에이쁠러쓰</Text>
         </View>
 
@@ -91,7 +87,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -100,6 +96,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f3f0fa', // 🔄 LinearGradient 대신 기본 배경색
   },
   card: {
     backgroundColor: '#fff',

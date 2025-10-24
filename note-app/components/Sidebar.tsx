@@ -1,6 +1,4 @@
-// components/common/Sidebar.tsx
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useFonts } from 'expo-font';
 
@@ -10,7 +8,11 @@ interface SidebarProps {
   navigateMode?: boolean; // 💡 true면 router.push()로 이동
 }
 
-export default function Sidebar({ activeTab = 'document', onSelectTab, navigateMode = false }: SidebarProps) {
+export default function Sidebar({
+  activeTab = 'document',
+  onSelectTab,
+  navigateMode = false,
+}: SidebarProps) {
   const router = useRouter();
 
   const [fontsLoaded] = useFonts({
@@ -27,7 +29,7 @@ export default function Sidebar({ activeTab = 'document', onSelectTab, navigateM
   };
 
   return (
-    <LinearGradient colors={['#a8edea', '#fed6e3']} style={styles.sidebar}>
+    <View style={styles.sidebar}>
       <View style={styles.logoContainer}>
         <Image
           source={require('@/assets/images/App_Icon.png')}
@@ -53,17 +55,56 @@ export default function Sidebar({ activeTab = 'document', onSelectTab, navigateM
           </Text>
         </TouchableOpacity>
       ))}
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  sidebar: { width: 250, paddingTop: 60, paddingHorizontal: 18, shadowOpacity: 0.15, shadowRadius: 8, elevation: 6 },
-  logoContainer: { alignItems: 'center', marginBottom: 50 },
-  logo: { width: 85, height: 85, marginBottom: 8 },
-  sidebarTitle: { fontSize: 30, color: '#111', textAlign: 'center', fontWeight: '700', letterSpacing: 0.5 },
-  tabButton: { backgroundColor: 'rgba(255,255,255,0.8)', paddingVertical: 16, borderRadius: 14, marginBottom: 16, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
-  activeTab: { backgroundColor: '#ff6b6b', borderColor: '#ff6b6b' },
-  tabText: { fontSize: 17, color: '#444', fontWeight: '600' },
-  activeText: { color: '#fff', fontWeight: '700' },
+  sidebar: {
+    width: 250,
+    paddingTop: 60,
+    paddingHorizontal: 18,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    backgroundColor: '#f3f0fa', // 🌸 LinearGradient 대신 파스텔 라벤더톤 배경
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 50,
+  },
+  logo: {
+    width: 85,
+    height: 85,
+    marginBottom: 8,
+  },
+  sidebarTitle: {
+    fontSize: 30,
+    color: '#111',
+    textAlign: 'center',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  tabButton: {
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    paddingVertical: 16,
+    borderRadius: 14,
+    marginBottom: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  activeTab: {
+    backgroundColor: '#ff6b6b',
+    borderColor: '#ff6b6b',
+  },
+  tabText: {
+    fontSize: 17,
+    color: '#444',
+    fontWeight: '600',
+  },
+  activeText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
 });

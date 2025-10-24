@@ -4,7 +4,6 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, Image } fro
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { API_BASE } from '../utils/api';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
 
 export default function FindpasswordScreen() {
@@ -44,7 +43,7 @@ export default function FindpasswordScreen() {
   };
 
   return (
-    <LinearGradient colors={['#a8edea', '#fed6e3']} style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.card}>
         {/* 로고 + 제목 */}
         <View style={styles.titleContainer}>
@@ -78,7 +77,7 @@ export default function FindpasswordScreen() {
           <Text style={styles.backText}>← 로그인으로 돌아가기</Text>
         </TouchableOpacity>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -87,6 +86,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f3f0fa', // 💜 배경색 (LinearGradient 대신)
   },
   card: {
     backgroundColor: '#fff',

@@ -12,7 +12,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-export const API_BASE = 'http://192.168.36.35:5001';
+import {API_BASE} from '@/utils/api'
 
 interface Stroke {
     pathString: string;
