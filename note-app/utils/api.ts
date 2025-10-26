@@ -1,9 +1,9 @@
-export const API_BASE = 'http://192.168.36.35:5001';
-export const API_BASE_QUIZ = 'http://192.168.36.35:5050';
+export const API_BASE = 'http://192.168.219.52:5001';
+export const API_BASE_QUIZ = 'http://192.168.219.52:5050';
 // utils/api.ts
 
 // 🚨 실제 사용하는 서버 주소로 반드시 변경해야 합니다.
-export const BASE_URL = 'http://192.168.36.35:5001';
+export const BASE_URL = 'http://192.168.219.52:5001';
 
 // 서버와 주고받을 필기 데이터의 형식을 정의합니다.
 interface StrokeData {
