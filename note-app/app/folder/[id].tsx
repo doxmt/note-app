@@ -29,6 +29,7 @@ import { useNoteActions } from '@/hooks/useNoteActions';
 import RenameNoteModal from '@/components/Modals/RenameNoteModal';
 import PdfThumbnail from 'react-native-pdf-thumbnail';
 import { useFonts } from 'expo-font';
+import UploadImageModal from '@/components/Modals/UploadImageModal';
 
 function PdfPreviewItem({ note, onPress }: { note: any; onPress: () => void }) {
   const [thumbUri, setThumbUri] = useState<string | null>(null);
@@ -94,6 +95,9 @@ export default function FolderScreen() {
 
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  // 상태 추가
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+
 
 
 
@@ -439,7 +443,9 @@ export default function FolderScreen() {
             openCreateModal();
           } else if (action === 'PDF 업로드') {
             setPdfModalVisible(true);
-          }
+          } else if (action === '이미지 업로드') {
+                 setImageModalVisible(true); // ✅ 추가
+               }
           setActionModalVisible(false);
         }}
       />
@@ -500,6 +506,16 @@ export default function FolderScreen() {
           }
           setRenameModalVisible(false);
         }}
+      />
+
+      <UploadImageModal
+        visible={imageModalVisible}
+        onClose={() => setImageModalVisible(false)}
+        onPickImage={async () => {
+          console.log('🖼️ 이미지 업로드 완료 → 목록 새로고침');
+          await reloadNotes(); // ✅ 업로드 후 리스트 갱신
+        }}
+        currentFolderId={currentFolderId}
       />
 
 

@@ -134,6 +134,53 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+// 2-2
+// ───────────────────────────────
+// 🖼️ 이미지 업로드 + DB 저장
+router.post('/upload-image', upload.single('file'), async (req, res) => {
+  try {
+    const { userId, noteId, name, createdAt, folderId } = req.body;
+    if (!userId || !noteId || !name || !createdAt || !req.file)
+      return res.status(400).json({ error: '필수 항목 또는 파일 누락' });
+
+    const db = mongoose.connection.db;
+    const imageBucket = new GridFSBucket(db, { bucketName: 'pageImages' });
+
+    const originalName = req.file.originalname || `${noteId}.png`;
+    const mime = req.file.mimetype || 'image/png';
+
+    // ✅ 이미지 1장 업로드
+    const uploadStream = imageBucket.openUploadStream(originalName, {
+      contentType: mime,
+      metadata: { noteId },
+    });
+    uploadStream.end(req.file.buffer);
+    await once(uploadStream, 'finish');
+    const imageFileId = uploadStream.id;
+
+    // ✅ Note 생성 (PDF 없이 단일 이미지)
+    const note = new Note({
+      userId,
+      noteId,
+      name,
+      createdAt: parseCreatedAt(createdAt),
+      folderId: normalizeFolderId(folderId),
+      fileId: null, // PDF 없음
+      fileName: originalName,
+      mimeType: mime,
+      pageImageIds: [imageFileId], // ✅ 단일 이미지
+      annotations: [],
+    });
+
+    await note.save();
+    res.status(201).json({ message: '이미지 업로드 성공', note });
+  } catch (err) {
+    console.error('🚨 이미지 업로드 오류:', err);
+    res.status(500).json({ error: '서버 오류' });
+  }
+});
+
+
 // ───────────────────────────────
 // 3️⃣ PDF 다운로드 스트리밍
 router.get('/:noteId/file', async (req, res) => {

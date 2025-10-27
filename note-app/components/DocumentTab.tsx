@@ -35,6 +35,7 @@ import AddOptionsModal from './Modals/AddOptionsModal';
 import FolderFormModal from './Modals/FolderFormModal';
 import FolderMoveModal from './Modals/FolderMoveModal';
 import PdfUploadModal from './Modals/PdfUploadModal';
+import UploadImageModal from '@/components/Modals/UploadImageModal';
 import PdfThumbnail from 'react-native-pdf-thumbnail';
 
 
@@ -134,6 +135,8 @@ export default function DocumentTab() {
     const [optionsVisibleNote, setOptionsVisibleNote] = useState<number | null>(null);
     const [renameModalVisible, setRenameModalVisible] = useState(false);
     const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+    const [imageModalVisible, setImageModalVisible] = useState(false);
+
 
     // 폴더/노트 이동
     const handleMove = async (targetId: string) => {
@@ -381,6 +384,7 @@ export default function DocumentTab() {
                 onSelect={(action) => {
                     if (action === '폴더 생성') openCreateModal();
                     else if (action === 'PDF 업로드') setPdfModalVisible(true);
+                    else if (action === '이미지 업로드') setImageModalVisible(true);
                     setActionModalVisible(false);
                 }}
             />
@@ -438,6 +442,18 @@ export default function DocumentTab() {
                 }}
                 currentFolderId={currentFolderId}
             />
+             {/* 🖼️ 이미지 업로드 모달 */}
+                 <UploadImageModal
+                         visible={imageModalVisible}
+                         onClose={() => setImageModalVisible(false)}
+                         onPickImage={async () => {
+                           console.log('🖼️ 이미지 업로드 완료 → 목록 새로고침');
+                           await reloadNotes(); // ✅ 업로드 후 리스트 갱신
+                         }}
+                         currentFolderId={currentFolderId}
+                       />
+
+
         </View>
     );
 }

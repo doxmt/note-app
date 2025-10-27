@@ -10,11 +10,10 @@ export default {
     scheme: "myapp",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
+
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.anonymous.noteapp",
-
-      // 🧩 여기를 추가하세요!
       infoPlist: {
         NSAppTransportSecurity: {
           NSAllowsArbitraryLoads: true,
@@ -43,6 +42,7 @@ export default {
       favicon: "./assets/images/favicon.png",
     },
 
+    // ✅ plugins 배열 올바른 구조
     plugins: [
       "expo-router",
       [
@@ -52,6 +52,13 @@ export default {
           imageWidth: 200,
           resizeMode: "contain",
           backgroundColor: "#ffffff",
+        },
+      ],
+      [
+        "expo-image-picker",
+        {
+          photosPermission: "이미지 업로드 기능을 위해 사진 접근 권한이 필요합니다.",
+          cameraPermission: "사진을 직접 촬영하려면 카메라 접근 권한이 필요합니다.",
         },
       ],
     ],

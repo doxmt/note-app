@@ -30,19 +30,19 @@ export default function UploadPDFModal({ visible, onClose, onPickPdf,currentFold
         type: 'application/pdf',
         copyToCacheDirectory: false,
       });
-  
+
       if (!result || !result.assets || result.assets.length === 0) {
         return; // 사용자가 취소하거나 잘못된 결과
       }
-  
+
       setLoading(true);
       setMessage(null);
-  
+
       const { uri, name } = result.assets[0];
       const fileNameWithoutExt = name.replace(/\.pdf$/i, '');
-  
+
       await createNoteFile(uri, fileNameWithoutExt);
-      
+
       setMessage('✅ .note 파일 생성 완료!');
       onPickPdf(); // 🔥 여기 추가!
     } catch (error) {

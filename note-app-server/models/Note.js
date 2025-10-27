@@ -13,7 +13,7 @@ const pageAnnotationSchema = new mongoose.Schema({
   strokes: { type: [strokeSchema], default: [] }
 });
 
-// 📘 Note (PDF 메타데이터 + 필기 + 파일 관리)
+// 📘 Note (PDF or Image)
 const NoteSchema = new mongoose.Schema(
   {
     // 기본 식별 정보
@@ -23,20 +23,27 @@ const NoteSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     folderId:  { type: String, default: null },
 
-    // PDF 파일 관련
-    fileId:    { type: mongoose.Schema.Types.ObjectId, default: null },
-    fileName:  { type: String, default: null },
-    mimeType:  { type: String, default: 'application/pdf' },
+    // 파일 관련 (PDF 또는 Image)
+    fileId:       { type: mongoose.Schema.Types.ObjectId, default: null },
+    fileName:     { type: String, default: null },
+    mimeType:     { type: String, default: null }, // ✅ pdf / image/png 등
     pageImageIds: { type: [mongoose.Schema.Types.ObjectId], default: [] },
 
-    // ✏️ 필기 정보 (페이지별 strokes 구조)
+    // 구분자 추가 ✅
+    noteType: {
+      type: String,
+      enum: ['pdf', 'image'],
+      default: 'pdf'
+    },
+
+    // ✏️ 필기 정보
     annotations: {
       type: [pageAnnotationSchema],
       default: []
     },
   },
   {
-    timestamps: true, // createdAt, updatedAt 자동
+    timestamps: true,
     strict: true
   }
 );
