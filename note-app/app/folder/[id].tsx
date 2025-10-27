@@ -384,7 +384,14 @@ export default function FolderScreen() {
 
                   {/* 제목 + 즐겨찾기 + 옵션버튼 */}
                   <View style={styles.folderLabelRow}>
-                    <Text style={styles.folderText}>{note.name}</Text>
+                    <Text
+                      style={styles.folderText}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {note.name}
+                    </Text>
+
 
                     {/* ⭐ 즐겨찾기 버튼 */}
                     <TouchableOpacity
@@ -581,7 +588,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',
   },
   folderLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
-  folderText: { fontSize: 14, fontWeight: '500' },
+  folderText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000',
+    maxWidth: 110, // ✅ 이름이 길어도 한 줄에서 '...' 처리됨
+  },
+
   dropdown: { fontSize: 16 },
   dropdownBox: { marginTop: 4, padding: 8, backgroundColor: '#eee', borderRadius: 8 },
   dropdownOption: { paddingVertical: 4, fontSize: 14 },

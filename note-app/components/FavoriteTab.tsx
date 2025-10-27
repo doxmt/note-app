@@ -48,7 +48,14 @@ export default function FavoriteTab() {
                     <Text style={{ color: "#aaa" }}>미리보기 없음</Text>
                   </View>
                 )}
-                <Text style={styles.noteName}>{note.name}</Text>
+                <Text
+                  style={styles.folderText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {note.name}
+                </Text>
+
               </TouchableOpacity>
             ))
           )}

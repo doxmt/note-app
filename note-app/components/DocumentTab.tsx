@@ -331,7 +331,14 @@ export default function DocumentTab() {
                           </TouchableOpacity>
 
                           <View style={styles.folderLabelRow}>
-                            <Text style={styles.folderText}>{pickNoteName(note)}</Text>
+                            <Text
+                              style={styles.folderText}
+                              numberOfLines={1}
+                              ellipsizeMode="tail"
+                            >
+                              {pickNoteName(note)}
+                            </Text>
+
 
                             {/* ⭐ 즐겨찾기 버튼 추가 */}
                             <TouchableOpacity
@@ -505,7 +512,13 @@ const styles = StyleSheet.create({
         gap: 4,
         marginTop: 6,
     },
-    folderText: { fontSize: 14, fontWeight: '500' },
+    folderText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: '#000',
+      maxWidth: 110, // ✅ 이름이 길어도 한 줄에서 '...' 처리됨
+    },
+
     dropdown: { fontSize: 16 },
     dropdownBox: {
         marginTop: 4,
