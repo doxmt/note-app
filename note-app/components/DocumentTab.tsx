@@ -37,6 +37,8 @@ import FolderMoveModal from './Modals/FolderMoveModal';
 import PdfUploadModal from './Modals/PdfUploadModal';
 import UploadImageModal from '@/components/Modals/UploadImageModal';
 import PdfThumbnail from 'react-native-pdf-thumbnail';
+import { Ionicons } from "@expo/vector-icons";
+
 
 
 function PdfPreviewItem({ note }: { note: any }) {
@@ -316,64 +318,79 @@ export default function DocumentTab() {
 
                     {/* 📄 루트 노트 목록 */}
                     {rootNotes.map((note: any, index: number) => {
-                        const id = pickNoteId(note);
-                        return (
-                            <View key={id} style={styles.folderContainer}>
-                                <TouchableOpacity
-                                  style={styles.folderItem}
-                                  onPress={() => openEditor(note)}
-                                >
-                                  <PdfPreviewItem note={note} />
-                                </TouchableOpacity>
+                      const id = pickNoteId(note);
+                      const isFav = note.isFavorite ?? false; // ✅ undefined 방어
 
+                      return (
+                        <View key={id} style={styles.folderContainer}>
+                          <TouchableOpacity
+                            style={styles.folderItem}
+                            onPress={() => openEditor(note)}
+                          >
+                            <PdfPreviewItem note={note} />
+                          </TouchableOpacity>
 
-                                <View style={styles.folderLabelRow}>
-                                    <Text style={styles.folderText}>{pickNoteName(note)}</Text>
-                                    <TouchableOpacity
-                                        onPress={() =>
-                                            setOptionsVisibleNote(optionsVisibleNote === index ? null : index)
-                                        }
-                                    >
-                                        <Text style={styles.dropdown}>▼</Text>
-                                    </TouchableOpacity>
-                                </View>
+                          <View style={styles.folderLabelRow}>
+                            <Text style={styles.folderText}>{pickNoteName(note)}</Text>
 
-                                {optionsVisibleNote === index && (
-                                    <View style={styles.dropdownBox}>
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                const noteId = note.id || note.noteId || note._id;
-                                                setSelectedNoteId(noteId);
-                                                setRenameModalVisible(true);
-                                                setOptionsVisibleNote(null);
-                                            }}
-                                        >
-                                            <Text style={styles.dropdownOption}>이름 변경</Text>
-                                        </TouchableOpacity>
+                            {/* ⭐ 즐겨찾기 버튼 추가 */}
+                            <TouchableOpacity
+                              onPress={() => handleNoteAction("favorite", id, { current: isFav })}
+                              style={{ paddingHorizontal: 4 }}
+                            >
+                              <Ionicons
+                                name={isFav ? "star" : "star-outline"} // 즐겨찾기 토글
+                                size={20}
+                                color={isFav ? "#FFD700" : "#bbb"} // 금색 or 회색
+                              />
+                            </TouchableOpacity>
 
-                                        <TouchableOpacity
-                                            onPress={async () => {
-                                                await handleNoteAction('delete', note.noteId);
-                                                setOptionsVisibleNote(null);
-                                            }}
-                                        >
-                                            <Text style={styles.dropdownOption}>삭제</Text>
-                                        </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() =>
+                                setOptionsVisibleNote(optionsVisibleNote === index ? null : index)
+                              }
+                            >
+                              <Text style={styles.dropdown}>▼</Text>
+                            </TouchableOpacity>
+                          </View>
 
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                setMovingFolderId(note.noteId);
-                                                setMoveModalVisible(true);
-                                                setOptionsVisibleNote(null);
-                                            }}
-                                        >
-                                            <Text style={styles.dropdownOption}>PDF 이동</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
+                          {optionsVisibleNote === index && (
+                            <View style={styles.dropdownBox}>
+                              <TouchableOpacity
+                                onPress={() => {
+                                  const noteId = note.id || note.noteId || note._id;
+                                  setSelectedNoteId(noteId);
+                                  setRenameModalVisible(true);
+                                  setOptionsVisibleNote(null);
+                                }}
+                              >
+                                <Text style={styles.dropdownOption}>이름 변경</Text>
+                              </TouchableOpacity>
+
+                              <TouchableOpacity
+                                onPress={async () => {
+                                  await handleNoteAction("delete", note.noteId);
+                                  setOptionsVisibleNote(null);
+                                }}
+                              >
+                                <Text style={styles.dropdownOption}>삭제</Text>
+                              </TouchableOpacity>
+
+                              <TouchableOpacity
+                                onPress={() => {
+                                  setMovingFolderId(note.noteId);
+                                  setMoveModalVisible(true);
+                                  setOptionsVisibleNote(null);
+                                }}
+                              >
+                                <Text style={styles.dropdownOption}>PDF 이동</Text>
+                              </TouchableOpacity>
                             </View>
-                        );
+                          )}
+                        </View>
+                      );
                     })}
+
                 </View>
             </ScrollView>
 

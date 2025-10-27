@@ -76,13 +76,18 @@ async function convertAndUploadPages(pdfBuffer, noteId, db) {
 // 1️⃣ 노트 목록 조회
 router.get('/', async (req, res) => {
   try {
-    const { userId, folderId } = req.query;
+    const { userId, folderId, isFavorite } = req.query; // ✅ isFavorite 추가!
     if (!userId) return res.status(400).json({ error: 'userId 필요' });
 
-    const filter = {
-      userId,
-      folderId: normalizeFolderId(folderId),
-    };
+    const filter = { userId };
+
+    // 폴더 필터 적용 (루트면 null)
+    const normalized = normalizeFolderId(folderId);
+    if (normalized !== null) filter.folderId = normalized;
+
+    // ✅ 즐겨찾기 필터 추가
+    if (isFavorite === 'true') filter.isFavorite = true;
+
     const notes = await Note.find(filter).sort({ createdAt: -1 });
     res.json({ notes });
   } catch (err) {
@@ -90,6 +95,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: '서버 오류' });
   }
 });
+
 
 // ───────────────────────────────
 // 2️⃣ PDF 업로드 + 이미지 변환 + DB저장
@@ -313,6 +319,33 @@ router.delete('/:noteId', async (req, res) => {
     res.json({ message: '삭제 완료' });
   } catch (err) {
     console.error('🚨 노트 삭제 실패:', err);
+    res.status(500).json({ error: '서버 오류' });
+  }
+});
+// ───────────────────────────────
+// 🔟 즐겨찾기 상태 변경 (토글)
+router.put('/:noteId/favorite', async (req, res) => {
+  try {
+    const { noteId } = req.params;
+    const { isFavorite } = req.body;
+
+    if (typeof isFavorite !== 'boolean') {
+      return res.status(400).json({ error: 'isFavorite(boolean) 필수' });
+    }
+
+    const note = await Note.findOneAndUpdate(
+      { noteId },
+      { $set: { isFavorite } },
+      { new: true }
+    );
+
+    if (!note) {
+      return res.status(404).json({ error: 'noteId 없음' });
+    }
+
+    res.json({ message: '즐겨찾기 상태 업데이트 성공', note });
+  } catch (err) {
+    console.error('🚨 즐겨찾기 상태 업데이트 실패:', err);
     res.status(500).json({ error: '서버 오류' });
   }
 });

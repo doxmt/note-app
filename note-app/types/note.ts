@@ -7,4 +7,5 @@ export type Note = {
   pdfPath: string;
   folderId?: string | null;
   userId: string;
+  isFavorite?: boolean;
 };

@@ -41,6 +41,10 @@ const NoteSchema = new mongoose.Schema(
       type: [pageAnnotationSchema],
       default: []
     },
+    isFavorite: {
+          type: Boolean,
+          default: false,
+        },
   },
   {
     timestamps: true,
